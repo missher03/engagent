@@ -2,6 +2,13 @@
 REM Chay ban nhanh (production): build frontend 1 lan, chuyen trang gan nhu tuc thi.
 REM Sau khi sua code frontend thi chay lai file nay de build lai.
 cd /d "%~dp0"
+REM Tat tien trinh cu con giu cong 3000 (frontend) va 8000 (backend)
+for %%P in (3000 8000) do (
+  for /f "tokens=5" %%I in ('netstat -ano ^| findstr /R /C:":%%P *[^ ]*  *LISTENING"') do (
+    echo Dang tat tien trinh PID %%I tren cong %%P
+    taskkill /F /PID %%I >nul 2>&1
+  )
+)
 if not exist "backend\.venv\Scripts\python.exe" (
   echo Khong tim thay backend\.venv. Hay tao venv va cai thu vien theo README truoc.
   pause
