@@ -5,9 +5,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    # Nhà cung cấp LLM: "anthropic" (Claude) hoặc "minimax"
+    llm_provider: str = "anthropic"
+
     anthropic_api_key: str = ""
     llm_model_fast: str = "claude-haiku-5-5"
     llm_model_smart: str = "claude-sonnet-5-5"
+
+    # MiniMax qua giao diện tương thích Anthropic. China: https://api.minimax.cn/anthropic
+    # Global: https://api.minimax.io/anthropic
+    minimax_api_key: str = ""
+    minimax_base_url: str = "https://api.minimax.cn/anthropic"
+    minimax_model_fast: str = "MiniMax-M3.1-Flash"
+    minimax_model_smart: str = "MiniMax-M3.1-Flash"
 
     azure_speech_key: str = ""
     azure_speech_region: str = "eastus"
@@ -26,8 +36,13 @@ class Settings(BaseSettings):
     force_mock: bool = False
 
     @property
+    def is_minimax(self) -> bool:
+        return self.llm_provider.strip().lower() == "minimax"
+
+    @property
     def llm_enabled(self) -> bool:
-        return bool(self.anthropic_api_key) and not self.force_mock
+        key = self.minimax_api_key if self.is_minimax else self.anthropic_api_key
+        return bool(key) and not self.force_mock
 
     @property
     def azure_enabled(self) -> bool:

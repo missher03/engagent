@@ -1,6 +1,9 @@
-"""Lớp bọc LLM (Claude). Mọi chỗ gọi LLM đi qua đây để dễ đổi model/nhà cung cấp.
+"""Lớp bọc LLM. Mọi chỗ gọi LLM đi qua đây để dễ đổi model/nhà cung cấp.
 
-Khi chưa có ANTHROPIC_API_KEY, `complete_json` trả về `mock` do nơi gọi cung cấp,
+LLM_PROVIDER=anthropic dùng Claude; LLM_PROVIDER=minimax dùng MiniMax qua endpoint
+tương thích Anthropic (cùng SDK, chỉ đổi base_url + key + tên model).
+
+Khi chưa có key của provider đang chọn, `complete_json` trả về `mock` do nơi gọi cung cấp,
 nên toàn bộ app vẫn chạy được để phát triển giao diện.
 """
 from __future__ import annotations
@@ -25,7 +28,12 @@ class LLMError(RuntimeError):
 def _get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=get_settings().anthropic_api_key)
+        s = get_settings()
+        if s.is_minimax:
+            # MiniMax xác thực bằng "Authorization: Bearer <key>"
+            _client = anthropic.Anthropic(auth_token=s.minimax_api_key, base_url=s.minimax_base_url)
+        else:
+            _client = anthropic.Anthropic(api_key=s.anthropic_api_key)
     return _client
 
 
@@ -55,13 +63,20 @@ def chat(
 ) -> str:
     """Gọi Claude, trả về text. smart=True dùng model mạnh (chấm bài, giám khảo)."""
     s = get_settings()
-    model = s.llm_model_smart if smart else s.llm_model_fast
-    kwargs: dict[str, Any] = dict(
-        model=model,
-        max_tokens=max_tokens,
-        messages=messages,
-        output_config={"effort": effort},
-    )
+    if s.is_minimax:
+        model = s.minimax_model_smart if smart else s.minimax_model_fast
+        # Token suy nghĩ của MiniMax tính vào max_tokens, nên nới rộng để không bị cắt mất phần trả lời.
+        kwargs: dict[str, Any] = dict(model=model, max_tokens=max_tokens * 2 + 4000, messages=messages)
+        if "flash" in model.lower():  # chỉ M3.1-Flash nhận output_config.effort (mặc định "max")
+            kwargs["output_config"] = {"effort": effort}
+    else:
+        model = s.llm_model_smart if smart else s.llm_model_fast
+        kwargs = dict(
+            model=model,
+            max_tokens=max_tokens,
+            messages=messages,
+            output_config={"effort": effort},
+        )
     if system:
         kwargs["system"] = system
     try:
@@ -71,10 +86,13 @@ def chat(
     except anthropic.APIStatusError as e:
         raise LLMError(f"LLM lỗi {e.status_code}: {e.message}") from e
     except anthropic.APIConnectionError as e:
-        raise LLMError("Không kết nối được tới Anthropic API") from e
+        raise LLMError(f"Không kết nối được tới {'MiniMax' if s.is_minimax else 'Anthropic'} API") from e
     if resp.stop_reason == "refusal":
         raise LLMError("LLM từ chối yêu cầu này")
-    return "".join(b.text for b in resp.content if b.type == "text")
+    text = "".join(b.text for b in resp.content if b.type == "text")
+    if not text and resp.stop_reason == "max_tokens":
+        raise LLMError("LLM hết max_tokens trước khi trả lời (phần suy nghĩ quá dài)")
+    return text
 
 
 def complete_json(

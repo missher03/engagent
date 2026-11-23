@@ -45,7 +45,7 @@ export default function Home() {
       {health && (
         <p className="muted">
           Dịch vụ: LLM <b>{health.services.llm}</b> · Phát âm <b>{health.services.pronunciation}</b> · TTS <b>{health.services.tts}</b>
-          {Object.values(health.services).some((s: any) => s !== "on") && " (điền key trong backend/.env để bật bản thật)"}
+          {Object.values(health.services).some((s: any) => s === "mock" || s === "browser-fallback") && " (điền key trong backend/.env để bật bản thật)"}
         </p>
       )}
     </>

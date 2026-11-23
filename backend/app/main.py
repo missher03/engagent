@@ -55,7 +55,7 @@ def health():
     return {
         "ok": True,
         "services": {
-            "llm": "on" if s.llm_enabled else "mock",
+            "llm": ("minimax" if s.is_minimax else "claude") if s.llm_enabled else "mock",
             "pronunciation": "on" if s.azure_enabled else "mock",
             "tts": "on" if s.tts_enabled else "browser-fallback",
         },

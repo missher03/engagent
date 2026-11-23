@@ -86,10 +86,24 @@ cd frontend && npm run typecheck
 
 | Biến | Lấy ở đâu | Không có thì |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | nghĩa từ, bài đọc, chấm viết/nói, giám khảo chạy mock |
+| `ANTHROPIC_API_KEY` hoặc `MINIMAX_API_KEY` | console.anthropic.com, hoặc console MiniMax (xem mục dưới) | nghĩa từ, bài đọc, chấm viết/nói, giám khảo chạy mock |
 | `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` | Azure portal → tạo resource **Speech** (gói F0 miễn phí 5 giờ/tháng) | điểm phát âm giả lập; màn Nói cho bạn gõ bản ghi |
 | `GOOGLE_TTS_API_KEY` | Google Cloud Console → bật **Text-to-Speech API** → Credentials → API key | dùng giọng đọc có sẵn của trình duyệt |
 | `DATAMUSE_API_KEY` | datamuse.com (bắt buộc từ 01/02/2027) | vẫn chạy được tới hết 31/01/2027 |
+
+### Dùng MiniMax thay cho Claude
+
+App gọi MiniMax qua endpoint tương thích Anthropic (cùng SDK, chỉ đổi địa chỉ, key và tên model). Trong `backend/.env`:
+
+```
+LLM_PROVIDER=minimax
+MINIMAX_API_KEY=<key của bạn>
+MINIMAX_BASE_URL=https://api.minimax.cn/anthropic     # key bản Trung Quốc; bản quốc tế: https://api.minimax.io/anthropic
+MINIMAX_MODEL_FAST=MiniMax-M3.1-Flash
+MINIMAX_MODEL_SMART=MiniMax-M3.1-Flash                # hoặc MiniMax-M3
+```
+
+Khởi động lại uvicorn rồi mở `/api/health`: dòng `llm` phải là `minimax`. MiniMax luôn bật suy nghĩ (thinking) với M3.1-Flash và phần suy nghĩ tính vào `max_tokens`, nên app tự nới `max_tokens` khi dùng MiniMax. Đổi lại Claude chỉ cần `LLM_PROVIDER=anthropic`.
 
 Model mặc định theo PRD: `claude-haiku-5-5` cho việc hàng loạt (giải nghĩa, sinh bài, câu hỏi) và `claude-sonnet-5-5` cho chấm viết, chấm nói, giám khảo. Đổi bằng `LLM_MODEL_FAST` / `LLM_MODEL_SMART`.
 

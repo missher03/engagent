@@ -28,3 +28,28 @@ def test_lesson_writing_examiner_pronunciation(client):
     p = client.post("/api/pronunciation/assess", data={"reference_text": "The model outperformed the benchmark."},
                     files={"audio": ("a.wav", b"RIFF0000", "audio/wav")}).json()
     assert p["mock"] and p["words"]
+
+
+def test_minimax_provider_builds_request(monkeypatch):
+    """Khi LLM_PROVIDER=minimax: dùng base_url MiniMax, model MiniMax, nới max_tokens."""
+    from types import SimpleNamespace
+
+    from app.config import Settings
+    from app.services import llm
+
+    s = Settings(llm_provider="minimax", minimax_api_key="k", force_mock=False)
+    captured = {}
+
+    class FakeMessages:
+        def create(self, **kw):
+            captured.update(kw)
+            return SimpleNamespace(stop_reason="end_turn", content=[
+                SimpleNamespace(type="thinking", thinking="..."), SimpleNamespace(type="text", text='{"a": 1}')])
+
+    monkeypatch.setattr(llm, "get_settings", lambda: s)
+    monkeypatch.setattr(llm, "_get_client", lambda: SimpleNamespace(messages=FakeMessages()))
+    assert s.llm_enabled
+    assert llm.complete_json("hi", mock=lambda: None, max_tokens=1000) == {"a": 1}
+    assert captured["model"] == "MiniMax-M3.1-Flash"
+    assert captured["max_tokens"] == 6000
+    assert captured["output_config"] == {"effort": "low"}
