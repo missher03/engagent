@@ -33,10 +33,13 @@ def enrich(word: Word, session: Session, context: str = "") -> Word:
 
 
 @router.get("/dictionary/lookup")
-def lookup(q: str, context: str = "", session: Session = Depends(get_session)):
+def lookup(q: str, context: str = "", lang: str = "auto", session: Session = Depends(get_session)):
+    """lang: auto (tự nhận diện) | en (Anh→Việt) | vi (Việt→Anh)."""
     term = q.strip()
     if not term:
         raise HTTPException(400, "Thiếu từ cần tra")
+    if (lang if lang in ("en", "vi") else dictionary.detect_lang(term)) == "vi":
+        return lookup_vi(term, context, session)
     word = session.exec(select(Word).where(func.lower(Word.term) == term.lower())).first()
     if word and word.enriched:
         result = word.model_dump()
@@ -47,6 +50,27 @@ def lookup(q: str, context: str = "", session: Session = Depends(get_session)):
     card = session.exec(select(Card).where(Card.word_id == result.get("id"))).first() if result.get("id") else None
     result["in_notebook"] = bool(card)
     return result
+
+
+def lookup_vi(query: str, context: str, session: Session) -> dict:
+    """Việt → Anh: gợi ý từ tiếng Anh từ LLM + các từ trong kho có nghĩa chứa cụm tiếng Việt."""
+    try:
+        data = dictionary.vi_to_en(query, context)
+    except llm.LLMError as e:
+        raise HTTPException(502, str(e)) from e
+    words = {w.term.lower(): w for w in session.exec(select(Word)).all()}
+    in_nb = {c.word_id for c in session.exec(select(Card)).all()}
+    q = query.lower()
+    in_kho = [w for w in words.values() if w.meaning_vi and q in w.meaning_vi.lower()][:10]
+    cands = []
+    for c in data.get("candidates", []):
+        w = words.get(str(c.get("term", "")).lower())
+        cands.append({**c, "id": w.id if w else None, "in_notebook": bool(w and w.id in in_nb)})
+    return {
+        "mode": "vi", "query": query, "candidates": cands, "note_vi": data.get("note_vi"),
+        "from_vocab": [{"id": w.id, "term": w.term, "meaning_vi": w.meaning_vi, "subtopic": w.subtopic,
+                        "in_notebook": w.id in in_nb} for w in in_kho if w.term.lower() not in {c["term"].lower() for c in cands}],
+    }
 
 
 @router.get("/decks")

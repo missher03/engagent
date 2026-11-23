@@ -134,3 +134,14 @@ Learner sentence: "{sentence}"
 Check: is "{term}" used with the right meaning, grammar and collocation? Is the whole sentence grammatical and natural?
 Return JSON only:
 {{"correct_usage": true|false, "score": 1-5, "feedback_vi": "1-3 câu nhận xét bằng tiếng Việt", "corrected": "the sentence corrected minimally (same as input if already correct)", "better": "a more natural B2 version", "errors": [{{"original": str, "correction": str, "explanation_vi": str}}]}}"""
+
+VI_TO_EN = """You are a bilingual dictionary for Vietnamese learners (CEFR B1-B2) working in IT, data science, AI and academic research.
+The learner typed a Vietnamese word or phrase: "{query}"
+Context hint (may be empty): {context}
+
+Give the 3-6 best English equivalents, most useful first, preferring words used in IT/data science/academic writing and meetings. Explain the nuance so the learner can choose the right one.
+Return JSON only:
+{{"candidates": [{{"term": str, "part_of_speech": str, "ipa": "American IPA in slashes", "stress": "e.g. sig-NIF-i-cance",
+  "nuance_vi": "khác biệt sắc thái / khi nào dùng từ này (tiếng Việt, 1-2 câu)", "register": "formal|neutral|informal|technical",
+  "example": "natural English example sentence in an IT or academic context", "example_vi": "Vietnamese translation"}}],
+  "note_vi": "một câu lưu ý chung nếu cần (có thể để trống)"}}"""

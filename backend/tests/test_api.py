@@ -68,3 +68,13 @@ def test_taxonomy_categories_and_word_practice(client):
     assert r["correct_usage"] is True
     added = client.post("/api/subtopics/ml-eval/notebook").json()["added"]
     assert added > 40
+
+
+def test_vietnamese_lookup(client):
+    from app.services.dictionary import detect_lang
+
+    assert detect_lang("ý nghĩa") == "vi" and detect_lang("overfitting") == "en"
+    r = client.get("/api/dictionary/lookup", params={"q": "ý nghĩa"}).json()
+    assert r["mode"] == "vi" and r["candidates"][0]["term"]
+    r = client.get("/api/dictionary/lookup", params={"q": "data", "lang": "vi"}).json()
+    assert r["mode"] == "vi"

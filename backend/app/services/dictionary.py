@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 
 import httpx
 
@@ -98,3 +99,26 @@ def lookup(term: str, context: str = "") -> dict:
         "cefr": meaning.get("cefr"),
         "related": fetch_related(term),
     }
+
+
+_VI_CHARS = re.compile(r"[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]", re.I)
+_VI_WORDS = {"la", "cua", "va", "cho", "nhung", "khong", "nghia", "du lieu", "mo hinh", "ket qua", "phan tich"}
+
+
+def detect_lang(text: str) -> str:
+    """'vi' nếu có dấu tiếng Việt (hoặc vài từ không dấu rất phổ biến), ngược lại 'en'."""
+    if _VI_CHARS.search(text):
+        return "vi"
+    return "vi" if text.strip().lower() in _VI_WORDS else "en"
+
+
+def vi_to_en(query: str, context: str = "") -> dict:
+    data = llm.complete_json(
+        prompts.VI_TO_EN.format(query=query, context=context or "(none)"),
+        mock=lambda: {"candidates": [{"term": "meaning", "part_of_speech": "noun", "ipa": "/ˈmiːnɪŋ/",
+                                      "stress": "MEAN-ing", "nuance_vi": "[mock] cần key LLM để gợi ý thật",
+                                      "register": "neutral", "example": "What is the meaning of this result?",
+                                      "example_vi": "Kết quả này có ý nghĩa gì?"}], "note_vi": ""},
+        max_tokens=2500,
+    )
+    return data if isinstance(data, dict) else {"candidates": []}
