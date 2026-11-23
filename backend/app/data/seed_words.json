@@ -1,0 +1,802 @@
+[
+ {
+  "term": "dataset",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "feature",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "label",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "missing values",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "outlier",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "imbalanced",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "sample size",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "collected from",
+  "deck": "ml",
+  "topic": 1,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "normalize",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "impute",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "encode",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "correlation",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "distribution",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "skewed",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "remove duplicates",
+  "deck": "ml",
+  "topic": 2,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "baseline",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "regression",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "classifier",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "ensemble",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "neural network",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "transformer",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "hyperparameter",
+  "deck": "ml",
+  "topic": 3,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "train/test split",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "cross-validation",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "overfit",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "accuracy",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "precision",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "recall",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "RMSE",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "outperform",
+  "deck": "ml",
+  "topic": 4,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "increase sharply",
+  "deck": "presentation",
+  "topic": 5,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "remain stable",
+  "deck": "presentation",
+  "topic": 5,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "peak at",
+  "deck": "presentation",
+  "topic": 5,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "account for",
+  "deck": "presentation",
+  "topic": 5,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "compared with",
+  "deck": "presentation",
+  "topic": 5,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "a slight drop",
+  "deck": "presentation",
+  "topic": 5,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "propose",
+  "deck": "awl",
+  "topic": 6,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "state-of-the-art",
+  "deck": "awl",
+  "topic": 6,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "contribution",
+  "deck": "awl",
+  "topic": 6,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "ablation study",
+  "deck": "awl",
+  "topic": 6,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "hypothesize",
+  "deck": "awl",
+  "topic": 6,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "to the best of our knowledge",
+  "deck": "awl",
+  "topic": 6,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 2
+ },
+ {
+  "term": "signpost",
+  "deck": "presentation",
+  "topic": 7,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "let me walk you through",
+  "deck": "presentation",
+  "topic": 7,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "moving on to",
+  "deck": "presentation",
+  "topic": 7,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "to sum up",
+  "deck": "presentation",
+  "topic": 7,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "takeaway",
+  "deck": "presentation",
+  "topic": 7,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "clarify",
+  "deck": "presentation",
+  "topic": 8,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "rephrase",
+  "deck": "presentation",
+  "topic": 8,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "that's a fair point",
+  "deck": "presentation",
+  "topic": 8,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "trade-off",
+  "deck": "presentation",
+  "topic": 8,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "within the scope of this study",
+  "deck": "presentation",
+  "topic": 8,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 1
+ },
+ {
+  "term": "portfolio",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "return",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "volatility",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "risk-adjusted",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "Sharpe ratio",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "backtest",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "look-ahead bias",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "sentiment",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "benchmark",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "drawdown",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "robust",
+  "deck": "finance",
+  "topic": 9,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 1
+ },
+ {
+  "term": "blocker",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "deploy",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "pipeline",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "ticket",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "estimate",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "on track",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 2
+ },
+ {
+  "term": "follow up",
+  "deck": "presentation",
+  "topic": 10,
+  "cefr": "B2",
+  "kind": "phrase",
+  "priority": 2
+ },
+ {
+  "term": "latency",
+  "deck": "ml",
+  "topic": 11,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "monitoring",
+  "deck": "ml",
+  "topic": 11,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "data drift",
+  "deck": "ml",
+  "topic": 11,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "retrain",
+  "deck": "ml",
+  "topic": 11,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "scalable",
+  "deck": "ml",
+  "topic": 11,
+  "cefr": "B2",
+  "kind": "term",
+  "priority": 2
+ },
+ {
+  "term": "bias",
+  "deck": "awl",
+  "topic": 12,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "interpretability",
+  "deck": "awl",
+  "topic": 12,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "explainable",
+  "deck": "awl",
+  "topic": 12,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "generalize",
+  "deck": "awl",
+  "topic": 12,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "limitation",
+  "deck": "awl",
+  "topic": 12,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "future work",
+  "deck": "awl",
+  "topic": 12,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 1
+ },
+ {
+  "term": "analyze",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "approach",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "assess",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "assume",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "concept",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "consistent",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "derive",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "evidence",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "factor",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "indicate",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "interpret",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "method",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "significant",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "variable",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "hypothesis",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "framework",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "empirical",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "validate",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ },
+ {
+  "term": "implication",
+  "deck": "awl",
+  "topic": null,
+  "cefr": "B2",
+  "kind": "academic",
+  "priority": 2
+ }
+]

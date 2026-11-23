@@ -1,0 +1,14 @@
+[
+ {"id": 1, "name": "Data & datasets", "situation": "Mô tả dữ liệu trong slide và báo cáo", "grammar": "Present simple; countable/uncountable nouns"},
+ {"id": 2, "name": "Data preprocessing & EDA", "situation": "Giải thích bước làm sạch dữ liệu", "grammar": "Passive voice; past simple"},
+ {"id": 3, "name": "Models & algorithms", "situation": "Giới thiệu phương pháp", "grammar": "Relative clauses (which, that, where)"},
+ {"id": 4, "name": "Training & evaluation", "situation": "Báo cáo kết quả mô hình", "grammar": "Comparatives; logical linkers"},
+ {"id": 5, "name": "Describing results & charts", "situation": "Đọc biểu đồ trên slide", "grammar": "Present perfect"},
+ {"id": 6, "name": "Reading research papers", "situation": "Đọc abstract, method, limitation", "grammar": "Reporting verbs; nominalization"},
+ {"id": 7, "name": "Presentation language", "situation": "Mở đầu, chuyển slide, kết luận", "grammar": "Future forms and plans"},
+ {"id": 8, "name": "Q&A and discussion", "situation": "Trả lời, xử lý câu hỏi khó", "grammar": "Indirect and clarification questions"},
+ {"id": 9, "name": "AI in finance & investment", "situation": "Nội dung luận văn", "grammar": "Hedging modals (may, might, could)"},
+ {"id": 10, "name": "Tech meetings & agile", "situation": "Daily stand-up, sprint review", "grammar": "Present continuous for progress"},
+ {"id": 11, "name": "MLOps & production", "situation": "Trao đổi với kỹ sư", "grammar": "Conditionals type 0 and 1"},
+ {"id": 12, "name": "Ethics, limitations & future work", "situation": "Phần cuối luận văn, câu hỏi phản biện", "grammar": "Second conditional"}
+]
