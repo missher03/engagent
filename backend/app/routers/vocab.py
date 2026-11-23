@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import random
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -32,24 +33,87 @@ def enrich(word: Word, session: Session, context: str = "") -> Word:
     return word
 
 
+MY_CAT = {"key": "mine", "name": "Từ bạn đã tra"}
+MY_SUBS = {"my-lookups": "Tất cả từ đã tra", "my-other": "Từ ngoài các chủ đề IT"}
+_TERM_OK = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 .'+#/&-]{0,60}$")
+
+
+def _topics_for_llm() -> str:
+    return "\n".join(f"{st['key']}: {st['name']} ({c['name']})" for c in _taxonomy() for st in c["subtopics"])
+
+
+def _subtopic_info(key: Optional[str]) -> Optional[dict]:
+    for c in _taxonomy():
+        for st in c["subtopics"]:
+            if st["key"] == key:
+                return {"key": key, "name": st["name"], "category": c["key"], "category_name": c["name"]}
+    return None
+
+
+def remember_lookup(session: Session, term: str, info: Optional[dict], word: Optional[Word]) -> Word:
+    """Ghi nhớ từ người dùng vừa tra: tạo mới nếu chưa có, lưu nội dung, xếp vào chủ đề, tăng số lần tra."""
+    if word is None:
+        word = Word(term=term, deck="lookup", source="lookup")
+    if info and not vocab_data.is_mock(info.get("meaning_vi")):
+        for f in (*vocab_data.CONTENT_FIELDS, "audio_url"):
+            if info.get(f) and not getattr(word, f):
+                setattr(word, f, info[f])
+        word.enriched = bool(word.meaning_vi)
+    st = _subtopic_info((info or {}).get("subtopic"))
+    if word.source == "lookup" and not word.subtopic:
+        if st:
+            word.category, word.subtopic = st["category"], st["key"]
+            word.subtopics = sorted(set((word.subtopics or []) + [st["key"]]))
+        elif info and (info.get("subtopic") or "").lower() == "other":
+            word.category = "other"
+    word.lookup_count = (word.lookup_count or 0) + 1
+    word.looked_up_at = now()
+    session.add(word)
+    session.commit()
+    session.refresh(word)
+    return word
+
+
 @router.get("/dictionary/lookup")
 def lookup(q: str, context: str = "", lang: str = "auto", session: Session = Depends(get_session)):
-    """lang: auto (tự nhận diện) | en (Anh→Việt) | vi (Việt→Anh)."""
+    """lang: auto (tự nhận diện) | en (Anh→Việt) | vi (Việt→Anh). Từ tiếng Anh tra xong được lưu vào kho."""
     term = q.strip()
     if not term:
         raise HTTPException(400, "Thiếu từ cần tra")
     if (lang if lang in ("en", "vi") else dictionary.detect_lang(term)) == "vi":
         return lookup_vi(term, context, session)
     word = session.exec(select(Word).where(func.lower(Word.term) == term.lower())).first()
+    info = None
     if word and word.enriched:
         result = word.model_dump()
         result["related"] = dictionary.fetch_related(term)
     else:
-        result = dictionary.lookup(term, context)
-        result["id"] = word.id if word else None
+        try:
+            needs_topic = word is None or (word.source == "lookup" and not word.subtopic)
+            info = dictionary.lookup(term, context, topics=_topics_for_llm() if needs_topic else "")
+        except llm.LLMError as e:
+            raise HTTPException(502, str(e)) from e
+        result = info
+    if word is not None or _TERM_OK.match(term):
+        word = remember_lookup(session, word.term if word else term, info, word)
+        if not info:
+            result = {**word.model_dump(), "related": result.get("related", [])}
+        result["id"] = word.id
+        sub = _subtopic_info(word.subtopic)
+        result["saved_to"] = sub or (
+            {"key": "my-other", "name": MY_SUBS["my-other"], "category_name": MY_CAT["name"]} if word.category == "other"
+            else {"key": "my-lookups", "name": MY_SUBS["my-lookups"], "category_name": MY_CAT["name"]})
+        result["lookup_count"] = word.lookup_count
     card = session.exec(select(Card).where(Card.word_id == result.get("id"))).first() if result.get("id") else None
     result["in_notebook"] = bool(card)
     return result
+
+
+@router.get("/dictionary/history")
+def lookup_history(limit: int = 20, session: Session = Depends(get_session)):
+    """Các từ đã tra gần đây (mới nhất trước)."""
+    ws = session.exec(select(Word).where(Word.looked_up_at.is_not(None)).order_by(Word.looked_up_at.desc()).limit(limit)).all()
+    return [{"id": w.id, "term": w.term, "meaning_vi": w.meaning_vi, "subtopic": w.subtopic, "lookup_count": w.lookup_count} for w in ws]
 
 
 def lookup_vi(query: str, context: str, session: Session) -> dict:
@@ -94,16 +158,29 @@ def list_words(
         stmt = stmt.where(Word.topic == topic)
     if q:
         stmt = stmt.where(Word.term.contains(q))
-    words = session.exec(stmt.order_by(Word.priority, Word.term)).all()
     if subtopic:
-        order = {t.lower(): i for i, t in enumerate(_subtopic_terms(subtopic))}
-        words = sorted((w for w in words if subtopic in (w.subtopics or [])), key=lambda w: order.get(w.term.lower(), 9999))
+        words = words_in_subtopic(session, subtopic)
+    else:
+        words = session.exec(stmt.order_by(Word.priority, Word.term)).all()
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
     return [{**w.model_dump(), "in_notebook": w.id in in_nb} for w in words]
 
 
 def _taxonomy():
     return vocab_data.parse_taxonomy()
+
+
+def words_in_subtopic(session: Session, key: str) -> list[Word]:
+    """Từ thuộc một chủ đề nhỏ: từ có sẵn theo thứ tự file, rồi đến từ bạn tự tra. Hỗ trợ cả chủ đề ảo my-*."""
+    allw = session.exec(select(Word)).all()
+    if key == "my-lookups":
+        ws = [w for w in allw if w.looked_up_at]
+        return sorted(ws, key=lambda w: w.looked_up_at, reverse=True)
+    if key == "my-other":
+        ws = [w for w in allw if w.source == "lookup" and w.category == "other"]
+        return sorted(ws, key=lambda w: w.looked_up_at or now(), reverse=True)
+    order = {t.lower(): i for i, t in enumerate(_subtopic_terms(key))}
+    return sorted((w for w in allw if key in (w.subtopics or [])), key=lambda w: (order.get(w.term.lower(), 9999), w.term.lower()))
 
 
 def _subtopic_terms(key: str) -> list[str]:
@@ -116,25 +193,42 @@ def _subtopic_terms(key: str) -> list[str]:
 
 @router.get("/categories")
 def categories(session: Session = Depends(get_session)):
-    """Cây lĩnh vực > chủ đề nhỏ, kèm số từ, số từ đã có nội dung, số từ trong sổ."""
-    words = {w.term.lower(): w for w in session.exec(select(Word)).all()}
+    """Cây lĩnh vực > chủ đề nhỏ, kèm số từ, số từ đã có nội dung, số từ trong sổ. Gồm cả từ bạn tự tra."""
+    allw = session.exec(select(Word)).all()
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
+    by_sub: dict[str, list[Word]] = {}
+    for w in allw:
+        for k in w.subtopics or []:
+            by_sub.setdefault(k, []).append(w)
+
+    def summary(key: str, name: str, ws: list[Word]) -> dict:
+        return {
+            "key": key, "name": name, "count": len(ws),
+            "ready": sum(1 for w in ws if w.enriched),
+            "in_notebook": sum(1 for w in ws if w.id in in_nb),
+            "mine": sum(1 for w in ws if w.source == "lookup"),
+            "preview": [w.term for w in ws[:6]],
+        }
+
     out = []
     for c in _taxonomy():
         subs = []
         for st in c["subtopics"]:
-            ws = [words.get(t.lower()) for t in st["terms"]]
-            ws = [w for w in ws if w]
-            subs.append({
-                "key": st["key"], "name": st["name"], "count": len(ws),
-                "ready": sum(1 for w in ws if w.enriched),
-                "in_notebook": sum(1 for w in ws if w.id in in_nb),
-                "preview": [w.term for w in ws[:6]],
-            })
+            order = {t.lower(): i for i, t in enumerate(st["terms"])}
+            ws = sorted(by_sub.get(st["key"], []), key=lambda w: (order.get(w.term.lower(), 9999), w.term.lower()))
+            subs.append(summary(st["key"], st["name"], ws))
         out.append({"key": c["key"], "name": c["name"], "subtopics": subs, "count": sum(x["count"] for x in subs)})
-    tax_terms = {t.lower() for c in _taxonomy() for st in c["subtopics"] for t in st["terms"]}
-    tw = [w for k, w in words.items() if k in tax_terms]
-    return {"total": len(tw), "ready": sum(1 for w in tw if w.enriched), "categories": out}
+    looked = [w for w in allw if w.looked_up_at]
+    if looked:
+        looked.sort(key=lambda w: w.looked_up_at, reverse=True)
+        subs = [summary("my-lookups", MY_SUBS["my-lookups"], looked)]
+        other = [w for w in looked if w.source == "lookup" and w.category == "other"]
+        if other:
+            subs.append(summary("my-other", MY_SUBS["my-other"], other))
+        out.insert(0, {**MY_CAT, "subtopics": subs, "count": len(looked)})
+    in_tree = {w.id for w in allw if w.subtopics}
+    tw = [w for w in allw if w.id in in_tree]
+    return {"total": len(tw), "ready": sum(1 for w in tw if w.enriched), "mine": len(looked), "categories": out}
 
 
 @router.get("/words/{word_id}")
@@ -155,8 +249,8 @@ def word_detail(word_id: int, session: Session = Depends(get_session)):
 def enrich_subtopic(key: str, batch: int = 15, session: Session = Depends(get_session)):
     """Sinh nội dung cho các từ chưa có trong một chủ đề nhỏ (gọi LLM theo lô)."""
     terms = _subtopic_terms(key)
-    words = [w for w in session.exec(select(Word)).all() if key in (w.subtopics or []) and not w.enriched]
-    name = next((st["name"] for c in _taxonomy() for st in c["subtopics"] if st["key"] == key), key)
+    words = [w for w in words_in_subtopic(session, key) if not w.enriched]
+    name = next((st["name"] for c in _taxonomy() for st in c["subtopics"] if st["key"] == key), "general IT and data science")
     by_term = {w.term.lower(): w for w in words}
     done = 0
     try:
@@ -183,8 +277,8 @@ def add_subtopic_to_notebook(key: str, session: Session = Depends(get_session)):
     """Thêm cả chủ đề nhỏ vào sổ từ (tạo thẻ ôn cho mọi từ chưa có)."""
     have = {c.word_id for c in session.exec(select(Card)).all()}
     added = 0
-    for w in session.exec(select(Word)).all():
-        if key in (w.subtopics or []) and w.id not in have:
+    for w in words_in_subtopic(session, key):
+        if w.id not in have:
             session.add(Card(word_id=w.id))
             added += 1
     session.commit()

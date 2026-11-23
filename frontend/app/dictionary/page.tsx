@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, post, speak } from "@/lib/api";
 
 export default function Dictionary() {
@@ -11,12 +12,16 @@ export default function Dictionary() {
   const [added, setAdded] = useState(false);
   const [lang, setLang] = useState("auto");
   const [addedVi, setAddedVi] = useState<Record<string, boolean>>({});
+  const [history, setHistory] = useState<any[]>([]);
+  const loadHistory = () => api("/api/dictionary/history?limit=16").then(setHistory).catch(() => {});
+  useEffect(() => { loadHistory(); }, []);
 
   async function lookup(term = q, l = lang) {
     if (!term.trim()) return;
     setLoading(true); setErr(null); setAdded(false); setAddedVi({});
     try {
       setRes(await api(`/api/dictionary/lookup?q=${encodeURIComponent(term)}&lang=${l}&context=${encodeURIComponent(context)}`));
+      loadHistory();
     } catch (e: any) { setErr(e.message); }
     setLoading(false);
   }
@@ -50,6 +55,16 @@ export default function Dictionary() {
       <input value={context} onChange={(e) => setContext(e.target.value)} style={{ width: "100%", marginTop: 8 }}
         placeholder="(Tuỳ chọn) dán câu chứa từ trong paper để nghĩa sát ngữ cảnh hơn" />
       {err && <p className="error">{err}</p>}
+      {!res && history.length > 0 && (
+        <div className="card">
+          <h2>Bạn đã tra gần đây</h2>
+          <div>{history.map((h) => (
+            <a key={h.id} href="#" className="tag primary" style={{ fontSize: 13, padding: "4px 12px" }}
+              onClick={(e) => { e.preventDefault(); setQ(h.term); lookup(h.term, "en"); }} title={h.meaning_vi || ""}>{h.term}</a>
+          ))}</div>
+          <p className="muted" style={{ marginBottom: 0 }}>Mọi từ bạn tra đều được lưu và xếp vào chủ đề trong <Link href="/words">Kho từ</Link>.</p>
+        </div>
+      )}
       {res?.mode === "vi" && (
         <div className="card">
           <h2 style={{ marginTop: 0 }}>“{res.query}” trong tiếng Anh</h2>
@@ -94,6 +109,12 @@ export default function Dictionary() {
             {res.audio_url ? <audio controls src={res.audio_url} /> : <button className="ghost" onClick={() => speak(res.term)}>🔊 Nghe</button>}
             {res.in_notebook || added ? <span className="ok">✓ Đã có trong sổ từ</span> : <button onClick={add}>+ Thêm vào sổ từ</button>}
           </div>
+          {res.saved_to && (
+            <p className="notice" style={{ background: "var(--primary-soft)" }}>
+              Đã lưu vào kho từ: <Link href={`/words/${res.saved_to.key}`}><b>{res.saved_to.category_name} › {res.saved_to.name}</b></Link>
+              {res.lookup_count > 1 && <span className="muted"> · bạn đã tra từ này {res.lookup_count} lần</span>}
+            </p>
+          )}
           <p><b>Nghĩa:</b> {res.meaning_vi}</p>
           <p><b>English:</b> {res.definition_en}</p>
           {res.usage_vi && <p><b>Cách dùng:</b> {res.usage_vi}</p>}

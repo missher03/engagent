@@ -78,3 +78,34 @@ def test_vietnamese_lookup(client):
     assert r["mode"] == "vi" and r["candidates"][0]["term"]
     r = client.get("/api/dictionary/lookup", params={"q": "data", "lang": "vi"}).json()
     assert r["mode"] == "vi"
+
+
+def test_lookup_is_remembered_and_classified(client, monkeypatch):
+    from app.services import dictionary
+
+    fake = {"term": "blorp toggle", "meaning_vi": "cờ tính năng", "definition_en": "a switch to turn a feature on or off",
+            "example": "We hid the new checkout behind a feature flag.", "collocations": [], "related": [],
+            "subtopic": "se-devops-x"}
+    # Chủ đề không tồn tại -> vẫn lưu, nằm trong "Từ bạn đã tra"
+    monkeypatch.setattr(dictionary, "lookup", lambda term, context="", topics="": {**fake, "term": term})
+    monkeypatch.setattr(dictionary, "fetch_related", lambda term, max_items=8: [])
+    r = client.get("/api/dictionary/lookup", params={"q": "blorp toggle", "lang": "en"}).json()
+    assert r["id"] and r["saved_to"]["key"] == "my-lookups" and r["lookup_count"] == 1
+
+    # Từ mới được LLM xếp vào chủ đề có thật -> hiện trong chủ đề đó
+    sub = client.get("/api/categories").json()["categories"][1]["subtopics"][0]["key"]
+    monkeypatch.setattr(dictionary, "lookup", lambda term, context="", topics="": {**fake, "term": term, "subtopic": sub})
+    r2 = client.get("/api/dictionary/lookup", params={"q": "snarf release", "lang": "en"}).json()
+    assert r2["saved_to"]["key"] == sub
+    assert any(w["term"] == "snarf release" for w in client.get("/api/words", params={"subtopic": sub}).json())
+
+    # Tra lại: dùng bản đã lưu, tăng số lần tra
+    r3 = client.get("/api/dictionary/lookup", params={"q": "Blorp Toggle", "lang": "en"}).json()
+    assert r3["id"] == r["id"] and r3["lookup_count"] == 2 and r3["meaning_vi"] == "cờ tính năng"
+
+    hist = client.get("/api/dictionary/history").json()
+    assert hist[0]["term"] == "blorp toggle"
+    cats = client.get("/api/categories").json()
+    assert cats["categories"][0]["key"] == "mine" and cats["mine"] >= 2
+    mine = client.get("/api/words", params={"subtopic": "my-lookups"}).json()
+    assert [w["term"] for w in mine][:2] == ["blorp toggle", "snarf release"]

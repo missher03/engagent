@@ -34,6 +34,9 @@ class Word(SQLModel, table=True):
     example_vi: Optional[str] = None
     collocations: list = Field(default_factory=list, sa_column=Column(JSON))
     enriched: bool = False  # đã tra từ điển + LLM chưa
+    source: Optional[str] = None  # None/"taxonomy" = kho có sẵn | "lookup" = từ người dùng tự tra
+    lookup_count: Optional[int] = 0  # số lần đã tra
+    looked_up_at: Optional[datetime] = None  # lần tra gần nhất
 
 
 class Card(SQLModel, table=True):

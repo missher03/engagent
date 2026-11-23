@@ -126,6 +126,14 @@ TERMS: {terms}
 Return JSON only: {{"entries": [{{"term": str, "meaning_vi": str, "definition_en": str, "part_of_speech": str, "ipa": str, "stress": str, "usage_vi": str, "collocations": [str], "example": str, "example_vi": str, "cefr": str}}]}}
 Keep "term" exactly as given."""
 
+# Nối thêm vào WORD_BATCH khi người dùng tự tra một từ: xếp từ vào chủ đề nhỏ phù hợp nhất.
+CLASSIFY_SUFFIX = """
+
+ALSO classify each term: add the field "subtopic" with the ONE best matching topic key from the list below,
+or "other" if the term does not belong to IT, data, AI or academic English.
+TOPICS (key: name):
+{topics}"""
+
 SENTENCE_CHECK = """You are an encouraging English tutor for a Vietnamese learner (CEFR {level}) in IT/data science.
 The learner must use the word "{term}" ({meaning_vi}) in their own sentence{mode_note}.
 

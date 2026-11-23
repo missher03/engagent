@@ -50,7 +50,7 @@ export default function Subtopic() {
           {words.map((w) => (
             <tr key={w.id}>
               <td><Link href={`/word/${w.id}?sub=${sub}`}><b>{w.term}</b></Link>
-                {w.part_of_speech && <div className="muted small">{w.part_of_speech}</div>}</td>
+                {w.part_of_speech && <div className="muted small">{w.part_of_speech}</div>}{w.source === "lookup" && <span className="tag">bạn đã tra</span>}</td>
               <td><button className="ghost icon" onClick={() => speak(w.term)} title="Nghe"><Icon name="volume" size={16} /></button> <span className="muted small">{w.ipa}<br />{w.stress}</span></td>
               <td>{w.meaning_vi || <span className="muted">chưa có (mở từ để sinh)</span>}</td>
               <td>{w.in_notebook ? <span className="tag primary">trong sổ</span> : ""}</td>

@@ -74,16 +74,26 @@ def llm_entries(terms: list[str], subtopic: str = "general IT and data science",
     return data.get("entries", []) if isinstance(data, dict) else []
 
 
-def llm_meaning(term: str, context: str = "") -> dict:
+def llm_meaning(term: str, context: str = "", topics: str = "") -> dict:
+    """Nghĩa đầy đủ cho một từ. Nếu có danh sách topics thì LLM đồng thời xếp từ vào một chủ đề nhỏ."""
     hint = f"general IT/data science (context sentence: {context})" if context else "general IT and data science"
-    entries = llm_entries([term], subtopic=hint)
+    prompt = prompts.WORD_BATCH.format(terms=json.dumps([term], ensure_ascii=False), subtopic=hint, category="IT")
+    if topics:
+        prompt += prompts.CLASSIFY_SUFFIX.format(topics=topics)
+    data = llm.complete_json(
+        prompt,
+        mock=lambda: {"entries": [{"term": term, "meaning_vi": f"[mock] nghĩa của '{term}' (chưa có key LLM)",
+                                   "example": f"In our project, {term} played an important role.", "cefr": "B2"}]},
+        max_tokens=1200,
+    )
+    entries = data.get("entries", []) if isinstance(data, dict) else []
     return entries[0] if entries else {}
 
 
-def lookup(term: str, context: str = "") -> dict:
-    """Tra đầy đủ một từ (không đụng DB)."""
+def lookup(term: str, context: str = "", topics: str = "") -> dict:
+    """Tra đầy đủ một từ (không đụng DB). topics: danh sách chủ đề để LLM phân loại (tùy chọn)."""
     base = fetch_free_dictionary(term)
-    meaning = llm_meaning(term, context)
+    meaning = llm_meaning(term, context, topics)
     return {
         "term": term,
         "ipa": meaning.get("ipa") or base.get("ipa"),
@@ -98,6 +108,7 @@ def lookup(term: str, context: str = "") -> dict:
         "collocations": meaning.get("collocations") or [],
         "cefr": meaning.get("cefr"),
         "related": fetch_related(term),
+        "subtopic": meaning.get("subtopic"),
     }
 
 

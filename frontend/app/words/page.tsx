@@ -23,12 +23,12 @@ export default function Categories() {
         {ready < total && " Từ chưa có nội dung sẽ được sinh khi bạn mở (hoặc chạy scripts/build_vocab.py để sinh sẵn tất cả)."}</p>
       {cats.map((c: any, i: number) => (
         <section key={c.key} style={{ ["--c" as any]: COLORS[i % COLORS.length] }}>
-          <div className="cat-head"><div className="ic"><Icon name="layers" size={20} /></div><h2>{c.name} <span className="muted">{c.count} từ</span></h2></div>
+          <div className="cat-head"><div className="ic"><Icon name={c.key === "mine" ? "search" : "layers"} size={20} /></div><h2>{c.name} <span className="muted">{c.count} từ</span></h2></div>
           <div className="grid">
             {c.subtopics.map((s: any) => (
               <Link key={s.key} href={`/words/${s.key}`} className="card topic">
                 <b>{s.name}</b>
-                <div className="muted" style={{ marginTop: 4 }}>{s.count} từ · {s.ready} sẵn sàng{s.in_notebook ? ` · ${s.in_notebook} trong sổ` : ""}</div>
+                <div className="muted" style={{ marginTop: 4 }}>{s.count} từ · {s.ready} sẵn sàng{s.in_notebook ? ` · ${s.in_notebook} trong sổ` : ""}{s.mine && c.key !== "mine" ? ` · ${s.mine} từ bạn tra` : ""}</div>
                 <div className="bar"><span style={{ width: `${(100 * s.in_notebook) / Math.max(s.count, 1)}%` }} /></div>
                 <div className="muted small">{s.preview.join(", ")}…</div>
               </Link>
