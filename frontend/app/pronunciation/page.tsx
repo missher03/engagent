@@ -34,7 +34,9 @@ export default function Pronunciation() {
 
   return (
     <>
+      <div className="eyebrow">Kỹ năng</div>
       <h1>Luyện phát âm</h1>
+      <p className="lead">Nghe mẫu, ghi âm rồi xem điểm từng từ.</p>
       <select onChange={(e) => setText(e.target.value)} style={{ width: "100%" }}>
         {SAMPLES.map((s) => <option key={s}>{s}</option>)}
       </select>

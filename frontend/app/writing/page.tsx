@@ -23,7 +23,9 @@ export default function Writing() {
 
   return (
     <>
+      <div className="eyebrow">Kỹ năng</div>
       <h1>Luyện viết</h1>
+      <p className="lead">Chọn đề, viết bài và nhận điểm, lỗi sai cùng bản sửa mẫu.</p>
       <select value={taskId} onChange={(e) => { setTaskId(e.target.value); setRes(null); }} style={{ width: "100%" }}>
         {tasks.map((t) => <option key={t.id} value={t.id}>{t.type} · {t.title}</option>)}
       </select>

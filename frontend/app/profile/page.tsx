@@ -16,8 +16,9 @@ export default function Profile() {
 
   return (
     <>
+      <div className="eyebrow">Cá nhân</div>
       <h1>Hồ sơ người học</h1>
-      <p className="muted">Nội dung trong app mặc định là IT/AI/dữ liệu nói chung. Phần dự án bên dưới là tùy chọn: nếu điền, bài đọc thỉnh thoảng có ví dụ liên quan và phần Hỏi đáp sẽ hỏi về dự án đó. Để trống thì mọi thứ giữ ở mức chung.</p>
+      <p className="lead">Nội dung trong app mặc định là IT/AI/dữ liệu nói chung. Phần dự án bên dưới là tùy chọn: nếu điền, bài đọc thỉnh thoảng có ví dụ liên quan và phần Hỏi đáp sẽ hỏi về dự án đó. Để trống thì mọi thứ giữ ở mức chung.</p>
       <div className="card" style={{ display: "grid", gap: 10 }}>
         <label>Trình độ hiện tại <select value={p.level} onChange={f("level")}><option>B1</option><option>B2</option></select></label>
         <label>Dự án/đề tài của bạn (tùy chọn)<input value={p.thesis_title} onChange={f("thesis_title")} style={{ width: "100%" }} /></label>

@@ -32,7 +32,9 @@ export default function Lessons() {
 
   return (
     <>
+      <div className="eyebrow">Kỹ năng</div>
       <h1>Bài nghe / đọc từ từ vựng của bạn</h1>
+      <p className="lead">Chọn chủ đề và dạng bài, app sẽ viết một bài đọc hoặc hội thoại có đúng các từ bạn đang học, kèm câu hỏi.</p>
       {meta && (
         <div className="row">
           <select value={subtopic} onChange={(e) => setSubtopic(e.target.value)}>

@@ -57,7 +57,9 @@ export default function Speaking() {
 
   return (
     <>
+      <div className="eyebrow">Kỹ năng</div>
       <h1>Luyện nói</h1>
+      <p className="lead">Chọn đề, ghi âm câu trả lời và nhận nhận xét theo 4 tiêu chí.</p>
       <select value={task.id} onChange={(e) => { setTask(TASKS.find((t) => t.id === e.target.value)!); setRes(null); setPron(null); }}>
         {TASKS.map((t) => <option key={t.id} value={t.id}>{t.id} · {t.title}</option>)}
       </select>

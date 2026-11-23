@@ -34,7 +34,9 @@ export default function Dictionary() {
 
   return (
     <>
+      <div className="eyebrow">Từ vựng</div>
       <h1>Tra từ</h1>
+      <p className="lead">Tra từ tiếng Anh hoặc tiếng Việt, xem nghĩa theo ngữ cảnh IT/AI và thêm vào sổ ôn tập.</p>
       <div className="row">
         <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && lookup()}
           placeholder="overfitting, API, pipeline... hoặc tiếng Việt: ý nghĩa, dữ liệu..." style={{ flex: 1 }} />
