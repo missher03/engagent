@@ -132,3 +132,15 @@ def test_speaking_coach(client, monkeypatch):
     assert d["mode"] == "answer" and d["phrases"] == []
     assert [m["role"] for m in seen["messages"]] == ["user", "assistant", "user"]
     assert "Cô Mai" in seen["system"]
+
+
+def test_conversation_mode(client):
+    assert any(s["key"] == "interview" for s in client.get("/api/coach/scenarios").json())
+    first = client.post("/api/coach/talk", json={"messages": [], "scenario": "standup"}).json()
+    assert first["reply_en"] and first["reply_vi"]
+    msgs = [{"role": "coach", "content": first["reply_en"]}, {"role": "user", "content": "tôi không biết nói sao"}]
+    r = client.post("/api/coach/talk", json={"messages": msgs, "scenario": "standup"}).json()
+    assert r["help"]["english"]
+    s = client.post("/api/coach/talk/summary", json={"messages": msgs, "scenario": "standup"}).json()
+    assert s["summary_vi"]
+    assert client.post("/api/coach/talk/summary", json={"messages": [], "scenario": "free"}).status_code == 400

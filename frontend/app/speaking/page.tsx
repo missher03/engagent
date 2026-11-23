@@ -4,6 +4,7 @@ import { api, post } from "@/lib/api";
 import Recorder from "@/components/Recorder";
 import Scores from "@/components/Scores";
 import SpeakingCoach from "@/components/SpeakingCoach";
+import ConversationCoach from "@/components/ConversationCoach";
 
 const TASKS = [
   {
@@ -24,7 +25,7 @@ const TASKS = [
 ];
 
 export default function Speaking() {
-  const [tab, setTab] = useState<"coach" | "tasks">("coach");
+  const [tab, setTab] = useState<"talk" | "coach" | "tasks">("talk");
   const [task, setTask] = useState(TASKS[0]);
   const [pron, setPron] = useState<any>(null);
   const [transcript, setTranscript] = useState("");
@@ -62,10 +63,14 @@ export default function Speaking() {
       <div className="eyebrow">Kỹ năng</div>
       <h1>Luyện nói</h1>
       <div className="tabs">
-        <button className={tab === "coach" ? "on" : ""} onClick={() => setTab("coach")}>Trợ lý nói</button>
+        <button className={tab === "talk" ? "on" : ""} onClick={() => setTab("talk")}>Trò chuyện</button>
+        <button className={tab === "coach" ? "on" : ""} onClick={() => setTab("coach")}>Diễn đạt ý</button>
         <button className={tab === "tasks" ? "on" : ""} onClick={() => setTab("tasks")}>Luyện theo đề</button>
       </div>
-      {tab === "coach" ? <>
+      {tab === "talk" ? <>
+      <p className="lead">Hội thoại tiếng Anh theo tình huống IT. Cô Mai hỏi tiếp để bạn nói nhiều nhất có thể, giúp khi bạn bí, và sửa lỗi nhẹ nhàng.</p>
+      <ConversationCoach />
+      </> : tab === "coach" ? <>
       <p className="lead">Nói ý của bạn bằng tiếng Việt. Trợ lý xác nhận lại ý, chỉ cách nói bằng tiếng Anh, giải thích vì sao, và trả lời bằng giọng nói.</p>
       <SpeakingCoach />
       </> : <>

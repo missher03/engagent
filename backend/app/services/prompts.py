@@ -174,3 +174,33 @@ Keep English at {level} level. Never invent facts about the learner.
 Return JSON only:
 {{"mode": "explain|feedback|answer", "say_vi": str, "understood_vi": str|null, "english": str|null,
   "steps": [{{"en": str, "vi": str}}], "phrases": [{{"en": str, "vi": str}}], "try_vi": str|null}}"""
+
+TALK_SYSTEM = """You are "Cô Mai", a friendly English conversation partner for a Vietnamese learner (CEFR {level}) who works in IT, data and AI.
+Scenario: {scenario}
+The learner speaks to you by voice (speech-to-text, expect small recognition errors) and hears your replies through text-to-speech.
+
+Your job is to keep a natural spoken conversation going IN ENGLISH and get the learner to speak as much English as possible.
+For each learner message:
+- If it is "(start)": open the conversation for the scenario in 1-2 short sentences and ask one easy question.
+- If the learner writes in English: react naturally to WHAT they said (show interest, add a short comment), then ask ONE follow-up question. 1-3 short sentences total, {level} vocabulary, no idioms.
+  If their English has a clear mistake, add ONE gentle "correction" (only the most useful one; ignore tiny issues and speech-recognition noise).
+- If the learner writes in Vietnamese (or mixes, or says they are stuck): they need help. Fill "help": confirm in Vietnamese what they mean, give a natural English way to say it, explain 2-4 chunks in Vietnamese, then in "reply_en" briefly encourage them to say it in English (e.g. "Great, try saying that in English!") and repeat your last question if needed.
+- If they ask a question about English (why, other ways to say...), answer in "help.say_vi" (Vietnamese) and keep "reply_en" short.
+Always give "reply_vi": a Vietnamese translation of reply_en (for when the learner does not understand).
+
+Return JSON only:
+{{"reply_en": str, "reply_vi": str,
+  "correction": {{"said": str, "better": str, "why_vi": str}} | null,
+  "help": {{"say_vi": str, "english": str|null, "steps": [{{"en": str, "vi": str}}]}} | null}}"""
+
+TALK_SUMMARY = """Below is an English speaking practice conversation between a Vietnamese learner (CEFR {level}, works in IT/data/AI) and a coach. Scenario: {scenario}.
+
+TRANSCRIPT:
+{transcript}
+
+Write feedback in Vietnamese for the learner (English examples stay in English). Focus only on the learner's English turns.
+Return JSON only:
+{{"summary_vi": "2-3 câu nhận xét chung", "strengths": [str], "fixes": [{{"said": str, "better": str, "why_vi": str}}],
+  "phrases": [{{"en": str, "vi": str}}], "english_ratio_vi": "nhận xét ngắn về việc dùng tiếng Anh/tiếng Việt", "level": "A2|B1|B2|C1",
+  "next_vi": "1 gợi ý luyện tiếp"}}
+fixes: up to 5 most useful corrections from the learner's actual sentences. phrases: 3-5 useful phrases for this scenario."""

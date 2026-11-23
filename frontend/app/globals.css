@@ -174,3 +174,6 @@ button.starter { width: 100%; justify-content: flex-start; text-align: left; fon
 .stepline { font-size: 14px; padding-left: 10px; border-left: 2px solid var(--line); }
 .composer { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; position: sticky; bottom: 12px; box-shadow: var(--shadow-lg); }
 @media (max-width: 860px) { .bubble, .bubble.ai { max-width: 100%; width: 100%; } }
+.fix { background: var(--warn-soft); border-radius: 12px; padding: 8px 12px; margin-top: 6px; font-size: 14px; }
+.fix svg { vertical-align: -2px; color: var(--warn); }
+.help { background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
