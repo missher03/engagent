@@ -75,6 +75,13 @@ npm run dev
 
 Mở http://localhost:3000. Nên dùng Chrome hoặc Edge (ghi âm và nhận dạng giọng nói của trình duyệt hoạt động tốt nhất).
 
+### Chạy nhanh trên Windows
+
+- `start-app.bat`: bản dùng hằng ngày. Build frontend một lần rồi chạy bản production, chuyển trang gần như tức thì. Sửa code frontend xong thì chạy lại file này.
+- `start-dev.bat`: bản phát triển, tự nạp lại khi sửa code. Lần đầu mở mỗi trang mất 2-4 giây vì Next.js phải biên dịch trang đó; từ lần thứ hai thì nhanh.
+
+API mặc định gọi `http://127.0.0.1:8000` thay vì `localhost` (trên Windows, `localhost` có thể thử IPv6 trước làm mỗi request chậm thêm).
+
 ### 3. Test
 
 ```bash

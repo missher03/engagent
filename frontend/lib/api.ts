@@ -1,4 +1,6 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Trên Windows "localhost" thường thử IPv6 (::1) trước rồi mới về 127.0.0.1, mỗi request có thể chậm thêm
+// vài trăm ms đến ~2 giây. Uvicorn chỉ nghe 127.0.0.1 nên đổi thẳng sang địa chỉ này.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace("//localhost:", "//127.0.0.1:");
 
 export async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   const isForm = init?.body instanceof FormData;

@@ -19,7 +19,19 @@ CONTENT_FIELDS = (
 _SPLIT = re.compile(r",(?![^()]*\))")  # không tách dấu phẩy trong ngoặc
 
 
+_cache: dict = {}
+
+
 def parse_taxonomy(path: Path = TAXONOMY) -> list[dict]:
+    """Có cache theo thời gian sửa file, nên gọi nhiều lần không tốn."""
+    key = (str(path), path.stat().st_mtime)
+    if key not in _cache:
+        _cache.clear()
+        _cache[key] = _parse_taxonomy(path)
+    return _cache[key]
+
+
+def _parse_taxonomy(path: Path) -> list[dict]:
     """Trả [{key, name, words:[{key, name, terms:[...]}]}] theo thứ tự trong file."""
     categories: list[dict] = []
     sub = None

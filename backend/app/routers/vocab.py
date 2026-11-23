@@ -282,7 +282,9 @@ def due_cards(limit: int = 20, session: Session = Depends(get_session)):
     rows = session.exec(
         select(Card, Word).join(Word, Card.word_id == Word.id).where(Card.due <= now()).order_by(Card.lapses.desc(), Card.due).limit(limit)
     ).all()
-    pool = [w.model_dump() for w in session.exec(select(Word).where(Word.meaning_vi.is_not(None))).all()]
+    # Chỉ lấy ngẫu nhiên 60 từ làm phương án nhiễu, không nạp cả kho 2000 từ.
+    pool = [w.model_dump() for w in session.exec(
+        select(Word).where(Word.meaning_vi.is_not(None)).order_by(func.random()).limit(60)).all()]
     out = []
     for card, word in rows:
         distractors = [p for p in pool if p["id"] != word.id]

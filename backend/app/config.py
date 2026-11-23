@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./engagent.db"
     storage_dir: str = "./storage"
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # Đặt FORCE_MOCK=1 để bỏ qua mọi API ngoài (dùng cho test/offline)
     force_mock: bool = False
