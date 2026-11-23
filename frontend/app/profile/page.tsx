@@ -20,7 +20,7 @@ export default function Profile() {
       <p className="muted">Nội dung trong app mặc định là IT/AI/dữ liệu nói chung. Phần dự án bên dưới là tùy chọn: nếu điền, bài đọc thỉnh thoảng có ví dụ liên quan và phần Hỏi đáp sẽ hỏi về dự án đó. Để trống thì mọi thứ giữ ở mức chung.</p>
       <div className="card" style={{ display: "grid", gap: 10 }}>
         <label>Trình độ hiện tại <select value={p.level} onChange={f("level")}><option>B1</option><option>B2</option></select></label>
-                <label>Dự án/đề tài của bạn (tùy chọn)<input value={p.thesis_title} onChange={f("thesis_title")} style={{ width: "100%" }} /></label>
+        <label>Dự án/đề tài của bạn (tùy chọn)<input value={p.thesis_title} onChange={f("thesis_title")} style={{ width: "100%" }} /></label>
         <label>Tóm tắt ngắn (tùy chọn)<textarea value={p.thesis_summary} onChange={f("thesis_summary")} /></label>
         <div className="row"><button onClick={save}>Lưu</button>{saved && <span className="ok">Đã lưu</span>}</div>
       </div>
