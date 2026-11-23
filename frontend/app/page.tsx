@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <div className="eyebrow" style={{ color: "rgba(255,255,255,.8)" }}>{hello} 👋</div>
+        <div className="eyebrow">{hello} 👋</div>
         <h1>{due > 0 ? `Hôm nay bạn có ${due} thẻ cần ôn` : "Hôm nay học gì nhỉ?"}</h1>
         <p>Ôn vài phút mỗi ngày giúp bạn nhớ từ lâu hơn. Sau đó thử một bài nghe hoặc luyện nói ngắn.</p>
         <div className="row">
