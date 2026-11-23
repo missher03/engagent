@@ -109,3 +109,26 @@ def test_lookup_is_remembered_and_classified(client, monkeypatch):
     assert cats["categories"][0]["key"] == "mine" and cats["mine"] >= 2
     mine = client.get("/api/words", params={"subtopic": "my-lookups"}).json()
     assert [w["term"] for w in mine][:2] == ["blorp toggle", "snarf release"]
+
+
+def test_speaking_coach(client, monkeypatch):
+    r = client.post("/api/coach/chat", json={"messages": [{"role": "user", "content": "tôi nghĩ nên kiểm thử mô hình trước khi triển khai"}]})
+    d = r.json()
+    assert r.status_code == 200 and d["say_vi"] and d["english"] and d["steps"]
+    assert client.post("/api/coach/chat", json={"messages": [{"role": "coach", "content": "x"}]}).status_code == 400
+
+    # Bật LLM giả: kiểm tra lịch sử hội thoại gửi đi đúng vai và JSON được đọc ra
+    from app.services import llm
+    seen = {}
+    monkeypatch.setattr(llm.get_settings(), "force_mock", False, raising=False)
+    monkeypatch.setattr(type(llm.get_settings()), "llm_enabled", property(lambda s: True))
+    def fake_chat(messages, **kw):
+        seen["messages"], seen["system"] = messages, kw["system"]
+        return '```json\n{"mode": "answer", "say_vi": "Vì ...", "english": null, "steps": []}\n```'
+    monkeypatch.setattr(llm, "chat", fake_chat)
+    d = client.post("/api/coach/chat", json={"messages": [
+        {"role": "coach", "content": "chào"}, {"role": "user", "content": "ý 1"},
+        {"role": "coach", "content": "In my opinion..."}, {"role": "user", "content": "tại sao dùng should?"}]}).json()
+    assert d["mode"] == "answer" and d["phrases"] == []
+    assert [m["role"] for m in seen["messages"]] == ["user", "assistant", "user"]
+    assert "Cô Mai" in seen["system"]

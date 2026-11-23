@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 from .config import get_settings
 from .db import engine, init_db
 from .models import Word
-from .routers import learn, speech, vocab
+from .routers import coach, learn, speech, vocab
 from .services.tts import audio_dir
 from .services.vocab_data import sync_words
 
@@ -49,6 +49,7 @@ app.add_middleware(
 app.include_router(vocab.router)
 app.include_router(speech.router)
 app.include_router(learn.router)
+app.include_router(coach.router)
 app.mount("/audio", StaticFiles(directory=audio_dir()), name="audio")
 
 

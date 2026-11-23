@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api, post } from "@/lib/api";
 import Recorder from "@/components/Recorder";
 import Scores from "@/components/Scores";
+import SpeakingCoach from "@/components/SpeakingCoach";
 
 const TASKS = [
   {
@@ -23,6 +24,7 @@ const TASKS = [
 ];
 
 export default function Speaking() {
+  const [tab, setTab] = useState<"coach" | "tasks">("coach");
   const [task, setTask] = useState(TASKS[0]);
   const [pron, setPron] = useState<any>(null);
   const [transcript, setTranscript] = useState("");
@@ -59,6 +61,14 @@ export default function Speaking() {
     <>
       <div className="eyebrow">Kỹ năng</div>
       <h1>Luyện nói</h1>
+      <div className="tabs">
+        <button className={tab === "coach" ? "on" : ""} onClick={() => setTab("coach")}>Trợ lý nói</button>
+        <button className={tab === "tasks" ? "on" : ""} onClick={() => setTab("tasks")}>Luyện theo đề</button>
+      </div>
+      {tab === "coach" ? <>
+      <p className="lead">Nói ý của bạn bằng tiếng Việt. Trợ lý xác nhận lại ý, chỉ cách nói bằng tiếng Anh, giải thích vì sao, và trả lời bằng giọng nói.</p>
+      <SpeakingCoach />
+      </> : <>
       <p className="lead">Chọn đề, ghi âm câu trả lời và nhận nhận xét theo 4 tiêu chí.</p>
       <select value={task.id} onChange={(e) => { setTask(TASKS.find((t) => t.id === e.target.value)!); setRes(null); setPron(null); }}>
         {TASKS.map((t) => <option key={t.id} value={t.id}>{t.id} · {t.title}</option>)}
@@ -85,6 +95,7 @@ export default function Speaking() {
           {res.drill_words?.length > 0 && <p>Luyện âm: {res.drill_words.map((w: string) => <span key={w} className="tag">{w}</span>)}</p>}
         </div>
       )}
+      </>}
     </>
   );
 }
