@@ -123,7 +123,7 @@ function WordPage() {
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>2. Đặt câu với “{w.term}”</h2>
-        <p className="muted">Viết 1 câu về dự án, luận văn hoặc công việc của bạn.</p>
+        <p className="muted">Viết 1 câu dùng từ này trong ngữ cảnh IT/AI/dữ liệu.</p>
         <textarea value={sentence} onChange={(e) => setSentence(e.target.value)} style={{ minHeight: 70 }} />
         <button onClick={() => submitSentence(sentence, "writing")} disabled={loading === "writing" || sentence.trim().split(/\s+/).length < 3}>
           {loading === "writing" ? "Đang chấm..." : "Chấm câu"}</button>

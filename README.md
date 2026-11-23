@@ -1,6 +1,6 @@
 # EngAgent
 
-Ứng dụng học tiếng Anh cho người làm Data Science/AI ở mức B1-B2: đọc paper, họp kỹ thuật, thuyết trình, báo cáo, hỏi đáp, và luyện bảo vệ luận văn về AI trong đầu tư.
+Ứng dụng học tiếng Anh cho người làm Data Science/AI ở mức B1-B2: đọc paper, họp kỹ thuật, thuyết trình, báo cáo và hỏi đáp. Nội dung mặc định là IT/AI/dữ liệu nói chung; dự án riêng trong Hồ sơ là tùy chọn.
 
 Đây là **bộ khung chạy được end-to-end**. Mọi module đã có API + giao diện; thiếu API key nào thì module đó tự chạy ở **chế độ mock** (dữ liệu giả, có ghi `[mock]`) để bạn vẫn bấm thử toàn bộ luồng.
 
@@ -16,7 +16,7 @@ engagent/
 │   │   ├── routers/
 │   │   │   ├── vocab.py        tra từ, kho từ, sổ từ, ôn tập SRS, thống kê
 │   │   │   ├── speech.py       chấm phát âm, TTS, chấm bài nói
-│   │   │   └── learn.py        sinh bài nghe/đọc, chấm viết, giám khảo hội đồng, hồ sơ
+│   │   │   └── learn.py        sinh bài nghe/đọc, chấm viết, giám khảo hỏi đáp kỹ thuật, hồ sơ
 │   │   ├── services/
 │   │   │   ├── llm.py          lớp bọc Claude (đổi model/nhà cung cấp ở đây)
 │   │   │   ├── prompts.py      toàn bộ prompt + rubric (sửa prompt ở đây)
@@ -43,7 +43,7 @@ engagent/
 | Bài nghe/đọc | `/lessons` | Claude Haiku sinh bài + câu hỏi, Google TTS |
 | Viết | `/writing` | Claude Sonnet chấm theo rubric 4 tiêu chí |
 | Nói | `/speaking` | Azure (nói tự do) + Claude Sonnet chấm |
-| Hội đồng | `/examiner` | Claude Sonnet đóng vai giám khảo, đọc câu hỏi thành tiếng |
+| Hỏi đáp | `/examiner` | LLM đóng vai người hỏi sau bài thuyết trình kỹ thuật, đọc câu hỏi thành tiếng |
 | Hồ sơ | `/profile` | đề tài, tóm tắt luận văn, ngày bảo vệ |
 
 ## Chạy trên máy
@@ -135,11 +135,11 @@ Trang chi tiết từ (`/word/<id>`) có: nghe (giọng trình duyệt, tốc đ
 - Tra từ có cache: tra lần đầu lưu vào DB, lần sau không gọi API.
 - SRS 4 mức (nhận biết → nhớ lại → dùng đúng → sản xuất); từ ưu tiên 1 chỉ "thuộc" khi qua mức 4 hai lần.
 - Sinh bài theo 5 thể loại, B1/B2, tự chọn từ chủ đề + từ đến hạn ôn; kiểm tra đủ từ, độ dài, độ dài câu; cache bài theo (chủ đề, trình độ, thể loại, từ).
-- Chấm phát âm đến từng từ/âm vị, chấm viết, chấm nói, mô phỏng hội đồng 5 câu có nhận xét.
+- Chấm phát âm đến từng từ/âm vị, chấm viết, chấm nói, mô phỏng hỏi đáp kỹ thuật 5 câu có nhận xét.
 - Lưu mọi lần làm bài (bảng `Attempt`) để theo dõi tiến bộ.
 
 Gợi ý bước tiếp theo (theo thứ tự PRD):
-1. Bộ từ: mở rộng `seed_words.json` (AWL đủ 570 họ từ, thuật ngữ ML ~600, tài chính ~400); thêm từ chủ đề 9 sát đề tài thật.
+1. Bộ từ: mở rộng `seed_words.json` (AWL đủ 570 họ từ, thuật ngữ ML ~600, tài chính ~400); thêm từ theo nhu cầu.
 2. SRS: thay hàm `schedule()` trong `services/srs.py` bằng FSRS (gói `fsrs`); chấm câu mức 4 bằng LLM thay vì chỉ kiểm tra có dùng từ.
 3. Chế độ bảo vệ luận văn: nạp slide/tóm tắt (PDF), sinh kịch bản nói từng slide, luyện đọc từng slide có chấm.
 4. Đăng nhập + nhiều người dùng: thêm bảng User, `user_id` vào các bảng; hoặc chuyển sang Supabase Auth.

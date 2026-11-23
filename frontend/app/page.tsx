@@ -30,7 +30,7 @@ export default function Home() {
       <div className="card row">
         <Link href="/review"><button>Ôn {stats?.due_today ?? ""} thẻ</button></Link>
         <Link href="/lessons"><button className="ghost">Tạo bài nghe</button></Link>
-        <Link href="/examiner"><button className="ghost">Luyện hỏi đáp hội đồng</button></Link>
+        <Link href="/examiner"><button className="ghost">Luyện hỏi đáp kỹ thuật</button></Link>
       </div>
       {progress && Object.keys(progress).length > 0 && (
         <div className="card">

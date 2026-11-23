@@ -17,7 +17,7 @@ const LINKS = [
   ["/lessons", "Bài nghe/đọc"],
   ["/writing", "Viết"],
   ["/speaking", "Nói"],
-  ["/examiner", "Hội đồng"],
+  ["/examiner", "Hỏi đáp"],
   ["/profile", "Hồ sơ"],
 ];
 

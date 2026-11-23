@@ -37,7 +37,7 @@ export default function Dictionary() {
       <h1>Tra từ</h1>
       <div className="row">
         <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && lookup()}
-          placeholder="overfitting, Sharpe ratio... hoặc tiếng Việt: ý nghĩa, dữ liệu..." style={{ flex: 1 }} />
+          placeholder="overfitting, API, pipeline... hoặc tiếng Việt: ý nghĩa, dữ liệu..." style={{ flex: 1 }} />
         <select value={lang} onChange={(e) => setLang(e.target.value)} title="Chiều tra">
           <option value="auto">Tự nhận diện</option>
           <option value="en">Anh → Việt</option>

@@ -95,7 +95,7 @@ def _mock_quiz(target_words: list[str]) -> dict:
             },
             {
                 "type": "speaking",
-                "question": f"In 30 seconds, describe your thesis using '{w}'.",
+                "question": f"In 30 seconds, explain how '{w}' is used in a real IT or AI project.",
                 "options": None,
                 "answer": "",
                 "explanation_vi": "Câu nói mở, không có đáp án cố định.",
@@ -107,11 +107,12 @@ def _mock_quiz(target_words: list[str]) -> dict:
 
 def generate_text(
     *, topic: str, level: str, fmt: str, target_words: list[str], review_words: list[str],
-    grammar_focus: str, thesis_topic: str,
+    grammar_focus: str, learner_context: str = "",
 ) -> tuple[dict, dict]:
     rules = LEVEL_RULES.get(level, LEVEL_RULES["B1"])
     prompt = prompts.GENERATE_TEXT.format(
-        level=level, format=fmt, topic=topic, thesis_topic=thesis_topic,
+        level=level, format=fmt, topic=topic,
+        learner_context=(f" Optionally, one example may relate to the learner's own work: {learner_context}." if learner_context else ""),
         min_words=rules["min_words"], max_words=rules["max_words"],
         max_unknown_pct=rules["max_unknown_pct"], grammar_focus=grammar_focus,
         target_words=", ".join(target_words), review_words=", ".join(review_words) or "(none)",

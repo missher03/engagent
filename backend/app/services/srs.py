@@ -82,7 +82,7 @@ def build_question(word: dict, level: int, distractors: list[dict]) -> dict:
         }
     return {
         "type": "produce",
-        "prompt": f'Viết (hoặc nói) 1 câu về dự án/luận văn của bạn có dùng "{term}".',
+        "prompt": f'Viết (hoặc nói) 1 câu trong ngữ cảnh công việc IT/AI có dùng "{term}".',
         "answer": term,
     }
 

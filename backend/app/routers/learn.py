@@ -28,7 +28,23 @@ def get_profile(session: Session) -> Profile:
         session.add(p)
         session.commit()
         session.refresh(p)
+    elif p.thesis_title.startswith(_OLD_DEFAULT_TITLE):
+        # Bỏ đề tài mẫu cũ (cá nhân hóa quá sâu); hồ sơ dự án giờ là tùy chọn.
+        p.thesis_title, p.thesis_summary = "", ""
+        session.add(p)
+        session.commit()
+        session.refresh(p)
     return p
+
+
+_OLD_DEFAULT_TITLE = "Predicting stock returns with news sentiment and LSTM"
+
+
+def _project(p: Profile) -> str:
+    if p.thesis_title.strip():
+        return f'"{p.thesis_title.strip()}". {p.thesis_summary.strip()}'
+    return ("a general IT/AI project of the speaker's choice (e.g. a machine learning model, a data pipeline "
+            "or a web service); ask general questions about problem, approach, evaluation, limitations and deployment")
 
 
 # ---------- Hồ sơ ----------
@@ -101,7 +117,7 @@ def generate_lesson(body: GenerateLesson, session: Session = Depends(get_session
     try:
         gen, qc = content.generate_text(
             topic=topic["name"], level=body.level, fmt=body.format, target_words=target,
-            review_words=review, grammar_focus=topic["grammar"], thesis_topic=profile.thesis_title,
+            review_words=review, grammar_focus=topic["grammar"], learner_context=profile.thesis_title,
         )
         questions = content.generate_quiz(gen["text"], target, body.level)
         audio = tts.synthesize(gen["text"]) if body.with_audio else None
@@ -180,7 +196,7 @@ def grade_writing(body: WritingIn, session: Session = Depends(get_session)):
     return result
 
 
-# ---------- Giám khảo hội đồng (Q&A luận văn) ----------
+# ---------- Giám khảo: hỏi đáp sau bài thuyết trình kỹ thuật ----------
 class ChatTurn(BaseModel):
     role: str  # "examiner" | "student"
     content: str
@@ -192,11 +208,11 @@ class ExaminerIn(BaseModel):
 
 
 MOCK_QUESTIONS = [
-    "Why did you choose LSTM instead of a simpler model?",
-    "How did you avoid look-ahead bias in your backtest?",
-    "Would your results still hold in a bear market?",
-    "How could a fund manager actually use your model?",
-    "Did you consider transaction costs and taxes?",
+    "Could you briefly explain the main problem your system solves?",
+    "Why did you choose this approach instead of a simpler baseline?",
+    "How did you evaluate it, and which metric matters most?",
+    "What are the main limitations, and how would you address them?",
+    "How would this work in production with much more data or users?",
 ]
 
 
@@ -215,7 +231,7 @@ def examiner_next(body: ExaminerIn, session: Session = Depends(get_session)):
     try:
         q = llm.chat(
             messages,
-            system=prompts.EXAMINER_SYSTEM.format(thesis_title=p.thesis_title, thesis_summary=p.thesis_summary, level=p.level),
+            system=prompts.EXAMINER_SYSTEM.format(project=_project(p), level=p.level),
             smart=True, max_tokens=600, effort="low",
         )
     except llm.LLMError as e:
@@ -247,7 +263,7 @@ def examiner_feedback(body: ExaminerIn, session: Session = Depends(get_session))
         raise HTTPException(502, str(e)) from e
     qs = result.get("per_question") or []
     avg = sum(q.get("answer_quality", 0) for q in qs) / len(qs) if qs else None
-    session.add(Attempt(skill="examiner", task="mock defense", input_text=transcript, result=result, score=avg))
+    session.add(Attempt(skill="examiner", task="technical Q&A", input_text=transcript, result=result, score=avg))
     session.commit()
     return result
 

@@ -5,9 +5,9 @@ import Recorder from "@/components/Recorder";
 import Scores from "@/components/Scores";
 
 const SAMPLES = [
-  "The LSTM model outperformed the benchmark on a risk-adjusted basis.",
+  "The new model outperformed the baseline on every evaluation metric.",
   "We used cross-validation to reduce the risk of overfitting.",
-  "Volatility increased sharply during the second quarter of 2020.",
+  "Latency increased sharply after we deployed the new version to production.",
   "That's beyond the scope of this study, but it's an important direction for future work.",
 ];
 

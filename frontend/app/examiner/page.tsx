@@ -52,8 +52,8 @@ export default function Examiner() {
 
   return (
     <>
-      <h1>Mô phỏng hội đồng bảo vệ</h1>
-      <p className="muted">Giám khảo hỏi lần lượt về luận văn trong <a href="/profile">Hồ sơ</a>. Công thức trả lời ACE: Acknowledge → Core answer → Evidence.</p>
+      <h1>Luyện hỏi đáp kỹ thuật</h1>
+      <p className="muted">Giám khảo hỏi như phần Q&amp;A sau một bài thuyết trình kỹ thuật (về dự án IT/AI chung, hoặc về dự án bạn điền trong <a href="/profile">Hồ sơ</a> nếu có). Công thức trả lời ACE: Acknowledge → Core answer → Evidence.</p>
       {turns.length === 0 && !feedback && (
         <div className="row">
           <label>Số câu <input type="number" min={1} max={15} value={n} onChange={(e) => setN(+e.target.value)} style={{ width: 70 }} /></label>

@@ -20,7 +20,7 @@ def test_seeded_words_and_notebook_flow(client):
 def test_lesson_writing_examiner_pronunciation(client):
     lesson = client.post("/api/lessons/generate", json={"topic_id": 9, "level": "B1"}).json()
     assert lesson["text"] and lesson["questions"]
-    g = client.post("/api/writing/grade", json={"task_id": "W4-backtest",
+    g = client.post("/api/writing/grade", json={"task_id": "W4-results",
         "text": "Both models outperform the benchmark and the results are robust in our test period."}).json()
     assert "scores" in g
     q = client.post("/api/examiner/next", json={"turns": []}).json()

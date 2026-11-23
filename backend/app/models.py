@@ -24,7 +24,7 @@ class Word(SQLModel, table=True):
     stress: Optional[str] = None  # vd "vo-la-TIL-i-ty"
     cefr: Optional[str] = None  # B1 | B2 | C1
     kind: Optional[str] = None  # term | academic | phrase
-    priority: int = 2  # 1 = bắt buộc cho luận văn
+    priority: int = 2  # 1 = từ cốt lõi, ôn kỹ hơn
     ipa: Optional[str] = None
     audio_url: Optional[str] = None
     definition_en: Optional[str] = None
@@ -88,15 +88,11 @@ class Attempt(SQLModel, table=True):
 
 
 class Profile(SQLModel, table=True):
-    """Hồ sơ người học: đề tài luận văn, trình độ, lỗi hay gặp."""
+    """Hồ sơ người học: trình độ, lỗi hay gặp; dự án/đề tài riêng là tùy chọn."""
 
     id: Optional[int] = Field(default=1, primary_key=True)
     level: str = "B1"
-    thesis_title: str = "Predicting stock returns with news sentiment and LSTM networks"
-    thesis_summary: str = (
-        "The thesis combines news sentiment scores with an LSTM model to predict daily returns "
-        "of 30 large Vietnamese stocks (VN30), backtested from 2019 to 2024 against XGBoost "
-        "and a buy-and-hold benchmark."
-    )
+    thesis_title: str = ""  # tùy chọn: tên dự án/đề tài riêng
+    thesis_summary: str = ""
     defense_date: Optional[str] = None
     common_errors: list = Field(default_factory=list, sa_column=Column(JSON))

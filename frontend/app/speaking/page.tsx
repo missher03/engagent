@@ -7,8 +7,8 @@ import Scores from "@/components/Scores";
 const TASKS = [
   {
     id: "S5", title: "Trình bày slide kết quả (90-120 giây)",
-    prompt: 'Present this slide in 90-120 seconds. Slide: "Model Comparison: Backtest 2019-2024". LSTM: annual return 14.2%, Sharpe 1.31 · XGBoost: 12.8%, Sharpe 1.18 · Buy-and-hold VN30: 9.5%, Sharpe 0.74 · Max drawdown LSTM: -18%. Use 1 transition, 1 comparison, 1 hedging sentence and: outperform, risk-adjusted, benchmark, drawdown, volatility.',
-    hint: "Now let me move on to the results of the backtest. This table compares three strategies... As you can see, the LSTM model achieved the highest annual return... However, ... so it may not be suitable for very risk-averse investors.",
+    prompt: 'Present this slide in 90-120 seconds. Slide: "Model Comparison for Ticket Classification". Fine-tuned BERT: F1 0.91, latency 85 ms · Gradient boosting: F1 0.86, latency 12 ms · Logistic regression (baseline): F1 0.78, latency 2 ms. Use 1 transition, 1 comparison, 1 hedging sentence and: outperform, baseline, trade-off, latency, accuracy.',
+    hint: "Now let me move on to the results. This table compares three models... As you can see, BERT achieved the highest F1 score... However, its latency is much higher, so it may not be the best choice for real-time use.",
   },
   {
     id: "S7", title: "Stand-up 60 giây",
@@ -17,7 +17,7 @@ const TASKS = [
   },
   {
     id: "S4", title: "Mô tả biểu đồ (60-90 giây)",
-    prompt: "Describe a line chart: portfolio value rose steadily from 2019 to early 2020, dropped sharply in March 2020, then recovered and peaked at the end of 2021.",
+    prompt: "Describe a line chart: daily active users rose steadily from January to May, dropped sharply in June after a failed release, then recovered and peaked in October.",
     hint: "The chart shows... It increased steadily... then dropped sharply... After that, it recovered and peaked at...",
   },
 ];

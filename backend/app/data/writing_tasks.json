@@ -1,13 +1,5 @@
 [
- {"id": "W4-backtest", "type": "W4", "title": "Tóm tắt kết quả mô hình (chương 4 luận văn)",
-  "prompt": "Based on the table, write 100-150 words summarizing the backtest results for chapter 4 of your thesis. Use at least 2 passive sentences, 1 comparison, 1 hedging sentence.",
-  "data": "LSTM + sentiment: annual return 14.2%, Sharpe 1.31, max drawdown -18% | XGBoost: 12.8%, Sharpe 1.18, max drawdown -15% | VN30 buy-and-hold: 9.5%, Sharpe 0.74, max drawdown -31% (period 2019-2024)",
-  "required_words": ["outperform", "benchmark", "risk-adjusted", "robust"],
-  "required_structures": ["2 passive sentences", "1 comparison", "1 hedging sentence"]},
- {"id": "W5-abstract", "type": "W5", "title": "Viết abstract luận văn",
-  "prompt": "Write a 150-200 word abstract for your thesis with 5 parts: background, problem, method, result, implication.",
-  "data": "", "required_words": ["propose", "baseline", "volatility"], "required_structures": ["present simple for method", "hedging in implication"]},
- {"id": "W6-email", "type": "W6", "title": "Email báo cáo tiến độ cho giảng viên hướng dẫn",
-  "prompt": "Write an 80-150 word email to your supervisor reporting progress this week, one blocker, and asking for a meeting.",
-  "data": "", "required_words": ["on track", "blocker", "follow up"], "required_structures": ["present perfect for progress", "polite request"]}
+ {"id": "W4-results", "type": "W4", "title": "Tóm tắt kết quả so sánh mô hình", "prompt": "Based on the table, write 100-150 words summarizing the results of a model comparison for a project report. Use at least 2 passive sentences, 1 comparison, 1 hedging sentence.", "data": "Gradient boosting: F1 0.86, latency 12 ms, training time 4 min | Fine-tuned BERT: F1 0.91, latency 85 ms, training time 2 h | Logistic regression (baseline): F1 0.78, latency 2 ms, training time 20 s (test set: 12,000 support tickets)", "required_words": ["outperform", "baseline", "trade-off", "robust"], "required_structures": ["2 passive sentences", "1 comparison", "1 hedging sentence"]},
+ {"id": "W5-abstract", "type": "W5", "title": "Viết abstract cho một dự án/bài báo kỹ thuật", "prompt": "Write a 150-200 word abstract for a technical project or paper of your choice (any IT/AI/data topic) with 5 parts: background, problem, method, result, implication.", "data": "", "required_words": ["propose", "baseline", "evaluate"], "required_structures": ["present simple for method", "hedging in implication"]},
+ {"id": "W6-email", "type": "W6", "title": "Email báo cáo tiến độ cho trưởng nhóm", "prompt": "Write an 80-150 word email to your team lead reporting progress this week, one blocker, and asking for a short meeting.", "data": "", "required_words": ["on track", "blocker", "follow up"], "required_structures": ["present perfect for progress", "polite request"]}
 ]
