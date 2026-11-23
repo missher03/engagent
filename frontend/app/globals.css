@@ -177,3 +177,37 @@ button.starter { width: 100%; justify-content: flex-start; text-align: left; fon
 .fix { background: var(--warn-soft); border-radius: 12px; padding: 8px 12px; margin-top: 6px; font-size: 14px; }
 .fix svg { vertical-align: -2px; color: var(--warn); }
 .help { background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+
+/* ===== Chips, exam layout, materials ===== */
+.chip { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; }
+.chip:hover { color: var(--fg); border-color: #4a4a52; }
+.chip.on { background: var(--primary-soft); color: var(--primary); border-color: transparent; }
+.band-pill { background: var(--ok-soft); color: var(--ok); font-weight: 800; border-radius: 999px; padding: 2px 10px; font-size: 13px; }
+.band-big { font-size: 46px; font-weight: 800; color: var(--primary); line-height: 1; text-align: center; min-width: 120px; }
+.band-big span { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 6px; }
+.exam-split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.exam-split > .card { margin: 0; }
+.exam-doc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+.exam-question { font-size: 18px; font-weight: 600; line-height: 1.5; }
+.cue { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+.cue ul { margin: 4px 0 10px; padding-left: 20px; }
+@media (max-width: 1100px) { .exam-split { grid-template-columns: 1fr; } .exam-doc { position: static; max-height: none; } }
+.material { display: grid; gap: 14px; }
+.mat-block { margin: 0; }
+.mat-block figcaption { margin-top: 6px; }
+.mermaid-box { background: var(--surface-2); border-radius: 12px; padding: 12px; overflow-x: auto; }
+.mermaid-box { cursor: zoom-in; }
+.mermaid-box { max-width: 100%; }
+.mermaid-box svg { max-width: none !important; min-width: 100%; height: auto; }
+.zoom-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(10,10,12,.92); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+.zoom-inner { width: 100%; max-height: 100%; overflow: auto; }
+.zoom-inner svg { width: 100% !important; max-width: none !important; height: auto; }
+.mermaid-fallback { background: var(--surface-2); border-radius: 12px; padding: 12px; font-size: 12px; white-space: pre-wrap; }
+.mat-text { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.screen { border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+.screen-title { background: var(--surface-2); padding: 8px 12px; font-weight: 700; font-size: 13px; border-bottom: 1px solid var(--line); }
+.screen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; padding: 10px; }
+.screen-region { border: 1px dashed #4a4a52; border-radius: 10px; padding: 8px 10px; }
+.drop { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px; border: 1.5px dashed #4a4a52; border-radius: 14px; padding: 22px; cursor: pointer; color: var(--muted); font-weight: 600; }
+.drop:hover { border-color: var(--primary); color: var(--primary); }
+.exam-split .coach .chat { max-height: 55vh; }

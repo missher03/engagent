@@ -1,0 +1,1345 @@
+[
+ {
+  "id": "arch-webapp",
+  "type": "architecture",
+  "level": "B1",
+  "title": "Kiến trúc một ứng dụng web thương mại điện tử",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  U[Mobile & Web clients] --> CDN[CDN]\n  U --> GW[API Gateway]\n  GW --> AUTH[Auth service]\n  GW --> ORD[Order service]\n  GW --> CAT[Catalog service]\n  ORD --> Q[(Message queue)]\n  Q --> PAY[Payment worker]\n  Q --> MAIL[Email worker]\n  ORD --> DB1[(Orders DB - PostgreSQL)]\n  CAT --> CACHE[(Redis cache)]\n  CAT --> DB2[(Catalog DB)]",
+    "caption": "Architecture of an online shop"
+   }
+  ],
+  "part1": [
+   "Do you use any web or mobile apps to shop online? Which ones?",
+   "Have you ever worked on a web application? What was your role?",
+   "Do you prefer drawing diagrams or writing documents to explain a system?"
+  ],
+  "cue": {
+   "prompt": "Describe this system architecture.",
+   "points": [
+    "what the main components are",
+    "how a customer order flows through the system",
+    "why a message queue is used",
+    "one part you think could become a bottleneck"
+   ]
+  },
+  "part3": [
+   "Why do many companies split a system into small services instead of one big application?",
+   "What are the risks of using a cache like Redis?",
+   "How would you explain this diagram to a non-technical manager?",
+   "If traffic increased ten times during a sale, what would you change first?"
+  ],
+  "vocab": [
+   "API gateway",
+   "message queue",
+   "bottleneck",
+   "scale out",
+   "asynchronous"
+  ]
+ },
+ {
+  "id": "arch-data-platform",
+  "type": "architecture",
+  "level": "B2",
+  "title": "Kiến trúc nền tảng dữ liệu (data platform)",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  A[App databases] -->|CDC| K[Kafka]\n  B[Web events] --> K\n  C[3rd-party APIs] -->|daily batch| S3[(Data lake - S3)]\n  K --> SP[Spark streaming]\n  SP --> S3\n  S3 --> DBT[dbt transformations]\n  DBT --> WH[(Data warehouse)]\n  WH --> BI[BI dashboards]\n  WH --> ML[ML feature store]\n  ORC[Airflow] -.schedules.-> DBT\n  ORC -.schedules.-> C",
+    "caption": "Company data platform"
+   }
+  ],
+  "part1": [
+   "Do you work with data in your job or studies?",
+   "Which data tools have you used, for example SQL or Excel?",
+   "Do you think every company needs a data team? Why?"
+  ],
+  "cue": {
+   "prompt": "Describe this data platform.",
+   "points": [
+    "where the data comes from",
+    "how batch and streaming data are handled",
+    "what the warehouse is used for",
+    "what role Airflow plays"
+   ]
+  },
+  "part3": [
+   "What are the advantages of streaming data compared with daily batches?",
+   "Why do teams keep both a data lake and a data warehouse?",
+   "How can a company make sure the data in dashboards is correct?",
+   "Who should own data quality: engineers or business teams? Why?"
+  ],
+  "vocab": [
+   "data lake",
+   "data warehouse",
+   "streaming",
+   "batch processing",
+   "orchestration",
+   "data quality"
+  ]
+ },
+ {
+  "id": "arch-microservices-k8s",
+  "type": "architecture",
+  "level": "B2",
+  "title": "Triển khai microservices trên Kubernetes",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart TB\n  LB[Load balancer] --> ING[Ingress]\n  subgraph Cluster[Kubernetes cluster]\n    ING --> SVC1[User service x3 pods]\n    ING --> SVC2[Search service x5 pods]\n    SVC2 --> ES[(Elasticsearch)]\n    SVC1 --> PG[(PostgreSQL)]\n    HPA[Autoscaler] -.-> SVC2\n  end\n  MON[Prometheus + Grafana] -.monitors.-> Cluster\n  CI[CI/CD pipeline] -->|deploy| Cluster",
+    "caption": "Deployment on Kubernetes"
+   }
+  ],
+  "part1": [
+   "Have you heard of Docker or Kubernetes? Where?",
+   "Do you like learning new tools? Why or why not?",
+   "How do you usually learn a new technology?"
+  ],
+  "cue": {
+   "prompt": "Describe how this system is deployed.",
+   "points": [
+    "what runs inside the cluster",
+    "why the search service has more pods",
+    "what the autoscaler and monitoring do",
+    "how new code reaches production"
+   ]
+  },
+  "part3": [
+   "Kubernetes is powerful but complex. When is it NOT a good choice?",
+   "What could go wrong if monitoring is missing?",
+   "How do you think automation like CI/CD changes the work of developers?",
+   "Should small startups use the same architecture as big companies?"
+  ],
+  "vocab": [
+   "cluster",
+   "pod",
+   "autoscaling",
+   "monitoring",
+   "deployment pipeline"
+  ]
+ },
+ {
+  "id": "sd-url-shortener",
+  "type": "system_design",
+  "level": "B1",
+  "title": "Thiết kế dịch vụ rút gọn link",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Design brief",
+    "body": "Requirements\n- Users paste a long URL and get a short link (e.g. sho.rt/a8K2x).\n- 10 million new links per month, 100 million clicks per month.\n- Clicking a short link must redirect in under 100 ms.\n- Links never expire. Show click statistics to the owner."
+   },
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  U[User] --> API[Shortener API]\n  API --> ID[ID generator]\n  API --> DB[(Key-value store)]\n  V[Visitor] --> R[Redirect service]\n  R --> C[(Cache)]\n  C -.miss.-> DB\n  R --> LOG[Click log] --> STATS[Stats job]",
+    "caption": "Proposed design"
+   }
+  ],
+  "part1": [
+   "Do you often share links with friends or colleagues?",
+   "Have you ever designed a system, even a small one?",
+   "Do you prefer simple or feature-rich apps?"
+  ],
+  "cue": {
+   "prompt": "Explain this design for a URL shortener.",
+   "points": [
+    "the main requirements",
+    "how a short link is created",
+    "how a click is redirected quickly",
+    "how click statistics are collected"
+   ]
+  },
+  "part3": [
+   "Why is the cache so important in this design?",
+   "What would you do if two users created the same short code?",
+   "How would you protect the service from spam or abuse?",
+   "Is it a good idea to keep links forever? Why or why not?"
+  ],
+  "vocab": [
+   "requirement",
+   "redirect",
+   "latency",
+   "cache hit",
+   "key-value store"
+  ]
+ },
+ {
+  "id": "sd-chat-app",
+  "type": "system_design",
+  "level": "B2",
+  "title": "Thiết kế ứng dụng nhắn tin",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Design brief",
+    "body": "Requirements\n- 1-to-1 and group chats (up to 200 people).\n- Messages delivered in real time; offline users get them later.\n- 5 million daily active users.\n- Message history kept for 1 year; images up to 10 MB."
+   },
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  C1[Client A] <-->|WebSocket| GW[Connection gateway]\n  C2[Client B] <-->|WebSocket| GW\n  GW --> MS[Message service]\n  MS --> DB[(Message store - Cassandra)]\n  MS --> PUSH[Push notification service]\n  C1 --> MEDIA[Media service] --> OBJ[(Object storage)]\n  MS --> PRES[Presence service]",
+    "caption": "Proposed design"
+   }
+  ],
+  "part1": [
+   "Which messaging apps do you use every day?",
+   "Do you prefer texting or calling? Why?",
+   "How many group chats are you in for work?"
+  ],
+  "cue": {
+   "prompt": "Describe this design for a chat application.",
+   "points": [
+    "the key requirements",
+    "how a message travels from one user to another",
+    "what happens when the receiver is offline",
+    "how images are handled"
+   ]
+  },
+  "part3": [
+   "Why use WebSockets instead of normal HTTP requests here?",
+   "How would you guarantee that messages arrive in the right order?",
+   "What are the privacy concerns of storing chat history?",
+   "If you had to cut one feature to launch faster, which would it be?"
+  ],
+  "vocab": [
+   "real time",
+   "WebSocket",
+   "presence",
+   "push notification",
+   "object storage",
+   "end-to-end encryption"
+  ]
+ },
+ {
+  "id": "sd-recommendation",
+  "type": "system_design",
+  "level": "B2",
+  "title": "Thiết kế hệ thống gợi ý sản phẩm",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Design brief",
+    "body": "Requirements\n- Show 20 recommended products on the home page for each user.\n- 2 million users, 500,000 products.\n- Page must load in under 300 ms.\n- New products should appear in recommendations within 1 day."
+   },
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  EV[User events] --> FS[(Feature store)]\n  FS --> TR[Nightly training job]\n  TR --> MODEL[Ranking model]\n  CAT[(Product catalog)] --> CG[Candidate generation]\n  FS --> CG\n  CG --> RK[Online ranking]\n  MODEL --> RK\n  RK --> API[Recommendation API] --> WEB[Home page]",
+    "caption": "Two-stage recommender"
+   }
+  ],
+  "part1": [
+   "Do you notice recommendations on apps like YouTube or Shopee?",
+   "Do you usually like what they recommend?",
+   "Would you turn recommendations off if you could?"
+  ],
+  "cue": {
+   "prompt": "Explain how this recommendation system works.",
+   "points": [
+    "the requirements and constraints",
+    "the difference between candidate generation and ranking",
+    "why the model is trained every night",
+    "how new products get recommended"
+   ]
+  },
+  "part3": [
+   "Why split recommendation into two stages?",
+   "How would you measure whether recommendations are good?",
+   "What is the 'filter bubble' problem and how could you reduce it?",
+   "Should users be told why a product is recommended?"
+  ],
+  "vocab": [
+   "candidate generation",
+   "ranking",
+   "cold start",
+   "click-through rate",
+   "personalization"
+  ]
+ },
+ {
+  "id": "ai-rag",
+  "type": "ai_flow",
+  "level": "B2",
+  "title": "Luồng RAG cho chatbot nội bộ",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  subgraph Indexing[Offline indexing]\n    D[Company documents] --> CH[Split into chunks] --> EM[Embedding model] --> VDB[(Vector database)]\n  end\n  Q[Employee question] --> QE[Embed question]\n  QE --> VDB\n  VDB -->|top 5 chunks| P[Build prompt]\n  Q --> P\n  P --> LLM[LLM] --> A[Answer with sources]\n  A --> FB[Thumbs up / down feedback]",
+    "caption": "Retrieval-augmented generation for an internal help bot"
+   }
+  ],
+  "part1": [
+   "Have you used ChatGPT or another AI assistant at work?",
+   "What do you usually ask it?",
+   "Do you trust its answers? Why?"
+  ],
+  "cue": {
+   "prompt": "Explain this RAG pipeline.",
+   "points": [
+    "what happens in the offline indexing step",
+    "how an employee's question is answered",
+    "why the answer includes sources",
+    "how feedback could improve the system"
+   ]
+  },
+  "part3": [
+   "Why not just ask the LLM directly without retrieval?",
+   "What can cause wrong answers even with RAG?",
+   "How would you keep the documents up to date?",
+   "Should a company let an AI bot answer HR or legal questions?"
+  ],
+  "vocab": [
+   "retrieval",
+   "embedding",
+   "vector database",
+   "chunk",
+   "hallucination",
+   "grounded"
+  ]
+ },
+ {
+  "id": "ai-mlops",
+  "type": "ai_flow",
+  "level": "B1",
+  "title": "Vòng đời một mô hình học máy (MLOps)",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  RAW[(Raw data)] --> PREP[Clean & label] --> FEAT[Feature engineering]\n  FEAT --> TRAIN[Train model] --> EVAL{Pass evaluation?}\n  EVAL -->|no| FEAT\n  EVAL -->|yes| REG[Model registry] --> DEP[Deploy as API]\n  DEP --> MON[Monitor accuracy & drift]\n  MON -->|drift detected| TRAIN",
+    "caption": "Machine learning lifecycle"
+   }
+  ],
+  "part1": [
+   "Have you ever trained a machine learning model?",
+   "Which part of a project do you enjoy most: data, models or deployment?",
+   "Do you think AI skills are important for every developer?"
+  ],
+  "cue": {
+   "prompt": "Describe this machine learning lifecycle.",
+   "points": [
+    "the steps before training",
+    "what happens if evaluation fails",
+    "how the model is deployed",
+    "why monitoring sends work back to training"
+   ]
+  },
+  "part3": [
+   "Why do many ML projects fail after deployment?",
+   "What is data drift? Can you give an example?",
+   "Who should decide whether a model is good enough to deploy?",
+   "How often should a model be retrained?"
+  ],
+  "vocab": [
+   "feature engineering",
+   "evaluation",
+   "model registry",
+   "data drift",
+   "retrain"
+  ]
+ },
+ {
+  "id": "ai-cv-pipeline",
+  "type": "ai_flow",
+  "level": "B1",
+  "title": "Hệ thống kiểm tra lỗi sản phẩm bằng camera",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  CAM[Factory camera] --> PRE[Resize & normalize]\n  PRE --> DET[Defect detection model - YOLO]\n  DET --> TH{Confidence > 0.8?}\n  TH -->|yes, defect| REJ[Reject item + alert]\n  TH -->|yes, OK| PASS[Pass]\n  TH -->|no| HUM[Human review]\n  HUM --> LAB[(New labels)] --> RET[Monthly retraining]",
+    "caption": "Visual inspection on a production line"
+   }
+  ],
+  "part1": [
+   "Have you seen AI used in factories or shops?",
+   "Do you think robots and AI will change factory jobs?",
+   "Would you like to work on hardware or software projects?"
+  ],
+  "cue": {
+   "prompt": "Explain how this inspection system works.",
+   "points": [
+    "what the camera and model do",
+    "what the confidence threshold is for",
+    "why some items go to human review",
+    "how the system gets better over time"
+   ]
+  },
+  "part3": [
+   "What are the risks if the threshold is set too low or too high?",
+   "Why is human review still needed?",
+   "How would you convince a factory manager to use this system?",
+   "What jobs might change because of systems like this?"
+  ],
+  "vocab": [
+   "object detection",
+   "confidence threshold",
+   "false positive",
+   "human in the loop",
+   "label"
+  ]
+ },
+ {
+  "id": "ui-ml-dashboard",
+  "type": "ui_design",
+  "level": "B1",
+  "title": "Màn hình dashboard theo dõi mô hình",
+  "materials": [
+   {
+    "kind": "screen",
+    "title": "Model monitoring dashboard",
+    "regions": [
+     {
+      "label": "Top bar",
+      "items": [
+       "Model: churn-predictor v3",
+       "Environment: Production",
+       "Last update: 5 min ago"
+      ]
+     },
+     {
+      "label": "KPI cards",
+      "items": [
+       "Accuracy (7 days): 0.87 ▼ 0.03",
+       "Requests/day: 1.2M",
+       "p95 latency: 45 ms",
+       "Drift alerts: 2"
+      ]
+     },
+     {
+      "label": "Main chart",
+      "items": [
+       "Line chart: accuracy per day, last 30 days, red line at 0.85 threshold"
+      ]
+     },
+     {
+      "label": "Right panel",
+      "items": [
+       "Feature drift table: 'monthly_spend' HIGH, 'region' LOW",
+       "Button: Retrain model"
+      ]
+     },
+     {
+      "label": "Bottom",
+      "items": [
+       "Recent predictions table with 'Explain' link per row"
+      ]
+     }
+    ]
+   }
+  ],
+  "part1": [
+   "Do you use dashboards in your work or studies?",
+   "What makes a dashboard easy to read for you?",
+   "Do you prefer numbers or charts?"
+  ],
+  "cue": {
+   "prompt": "Describe this dashboard design.",
+   "points": [
+    "what information is shown at the top",
+    "what the main chart tells the user",
+    "what the drift panel warns about",
+    "what action a user can take"
+   ]
+  },
+  "part3": [
+   "Which number on this screen would you look at first, and why?",
+   "What would you add or remove to make it clearer?",
+   "Who are the users of this dashboard: engineers or managers?",
+   "Should a 'Retrain' button be available to everyone? Why?"
+  ],
+  "vocab": [
+   "dashboard",
+   "KPI",
+   "threshold",
+   "drift alert",
+   "layout"
+  ]
+ },
+ {
+  "id": "ui-onboarding",
+  "type": "ui_design",
+  "level": "B1",
+  "title": "Luồng đăng ký tài khoản (onboarding)",
+  "materials": [
+   {
+    "kind": "mermaid",
+    "code": "flowchart LR\n  L[Landing page] --> S[Sign up: email or Google]\n  S --> V[Verify email]\n  V --> P[Choose your role]\n  P --> T[Pick 3 interests]\n  T --> H[Home with guided tour]\n  S -.42% drop.-> X1((leave))\n  V -.18% drop.-> X2((leave))\n  T -.9% drop.-> X3((leave))",
+    "caption": "Sign-up flow with drop-off rates"
+   }
+  ],
+  "part1": [
+   "How do you feel about long sign-up forms?",
+   "Do you usually sign up with Google or with email?",
+   "What makes you leave an app in the first minute?"
+  ],
+  "cue": {
+   "prompt": "Describe this onboarding flow and its problems.",
+   "points": [
+    "the steps a new user goes through",
+    "where most users leave",
+    "possible reasons for the biggest drop",
+    "one change you would test first"
+   ]
+  },
+  "part3": [
+   "Why do many apps ask for so little information at sign-up now?",
+   "How would you run an experiment to improve this flow?",
+   "Is it OK to make email verification optional? Why?",
+   "How do designers and engineers work together on flows like this?"
+  ],
+  "vocab": [
+   "onboarding",
+   "drop-off",
+   "conversion rate",
+   "A/B test",
+   "friction"
+  ]
+ },
+ {
+  "id": "ui-api-portal",
+  "type": "ui_design",
+  "level": "B2",
+  "title": "Trang quản lý API key cho nhà phát triển",
+  "materials": [
+   {
+    "kind": "screen",
+    "title": "Developer portal - API keys",
+    "regions": [
+     {
+      "label": "Sidebar",
+      "items": [
+       "Overview",
+       "API keys (selected)",
+       "Usage",
+       "Billing",
+       "Docs"
+      ]
+     },
+     {
+      "label": "Header",
+      "items": [
+       "Title: API keys",
+       "Button: + Create new key"
+      ]
+     },
+     {
+      "label": "Keys table",
+      "items": [
+       "Name | Created | Last used | Scope | Actions",
+       "prod-backend | 2026-03-02 | 2 min ago | read+write | Rotate · Revoke",
+       "test-local | 2026-10-10 | never | read | Revoke"
+      ]
+     },
+     {
+      "label": "Warning banner",
+      "items": [
+       "1 key has not been rotated for 260 days"
+      ]
+     },
+     {
+      "label": "Usage widget",
+      "items": [
+       "Bar chart: requests per day, quota 100k/day"
+      ]
+     }
+    ]
+   }
+  ],
+  "part1": [
+   "Have you ever used an API from another company?",
+   "What makes documentation good or bad for you?",
+   "Do you think security makes products harder to use?"
+  ],
+  "cue": {
+   "prompt": "Describe this developer portal screen.",
+   "points": [
+    "what the user can do on this page",
+    "what the table columns mean",
+    "why there is a warning banner",
+    "how usage is shown"
+   ]
+  },
+  "part3": [
+   "Why should API keys be rotated regularly?",
+   "How would you design the 'Revoke' action so users don't make mistakes?",
+   "What other security features would you add to this page?",
+   "How can good developer experience help a company grow?"
+  ],
+  "vocab": [
+   "API key",
+   "scope",
+   "rotate",
+   "revoke",
+   "quota",
+   "developer experience"
+  ]
+ },
+ {
+  "id": "data-users",
+  "type": "data_table",
+  "level": "B1",
+  "title": "Người dùng hoạt động theo tháng",
+  "materials": [
+   {
+    "kind": "chart",
+    "x": [
+     "Jan",
+     "Feb",
+     "Mar",
+     "Apr",
+     "May",
+     "Jun",
+     "Jul",
+     "Aug"
+    ],
+    "series": [
+     {
+      "name": "Monthly active users (thousands)",
+      "values": [
+       120,
+       135,
+       150,
+       148,
+       190,
+       160,
+       175,
+       210
+      ]
+     }
+    ],
+    "unit": "thousand users",
+    "caption": "App usage in 2026 (May: marketing campaign, Jun: payment outage for 3 days)"
+   }
+  ],
+  "part1": [
+   "Do you use any app every single day?",
+   "Do you look at statistics or charts in your job?",
+   "Are you good at remembering numbers?"
+  ],
+  "cue": {
+   "prompt": "Describe the trend in this chart.",
+   "points": [
+    "the overall trend",
+    "the highest and lowest points",
+    "what might explain the changes in May and June",
+    "what you expect for the next months"
+   ]
+  },
+  "part3": [
+   "Why can monthly active users be a misleading number?",
+   "What other metrics would you check together with this one?",
+   "How should a team react to a sudden drop like in June?",
+   "Is growth always good for a product?"
+  ],
+  "vocab": [
+   "trend",
+   "peak",
+   "drop sharply",
+   "recover",
+   "steadily"
+  ]
+ },
+ {
+  "id": "data-cloud-cost",
+  "type": "data_table",
+  "level": "B2",
+  "title": "Chi phí cloud theo quý",
+  "materials": [
+   {
+    "kind": "table",
+    "columns": [
+     "Service",
+     "Q1 ($)",
+     "Q2 ($)",
+     "Q3 ($)",
+     "Change Q2→Q3"
+    ],
+    "rows": [
+     [
+      "Compute (VMs)",
+      "42,000",
+      "45,500",
+      "61,200",
+      "+34%"
+     ],
+     [
+      "Storage",
+      "8,100",
+      "8,600",
+      "9,000",
+      "+5%"
+     ],
+     [
+      "Data transfer",
+      "5,300",
+      "5,900",
+      "12,400",
+      "+110%"
+     ],
+     [
+      "Managed database",
+      "11,000",
+      "11,000",
+      "11,800",
+      "+7%"
+     ],
+     [
+      "GPU (ML training)",
+      "3,000",
+      "9,000",
+      "18,500",
+      "+106%"
+     ],
+     [
+      "Total",
+      "69,400",
+      "80,000",
+      "112,900",
+      "+41%"
+     ]
+    ],
+    "caption": "Cloud bill by service, 2026"
+   }
+  ],
+  "part1": [
+   "Do you know how much the tools you use at work cost?",
+   "Have you ever had to reduce costs in a project?",
+   "Do you prefer paying monthly or once?"
+  ],
+  "cue": {
+   "prompt": "Describe and analyse this cloud cost table.",
+   "points": [
+    "how the total cost changed",
+    "which services grew the most",
+    "possible reasons for the increase",
+    "what you would investigate first"
+   ]
+  },
+  "part3": [
+   "Why do cloud costs often grow faster than expected?",
+   "How can engineers be made responsible for cost?",
+   "When is it cheaper to run your own servers instead of the cloud?",
+   "Is it worth spending a lot on GPUs for ML training?"
+  ],
+  "vocab": [
+   "cost overrun",
+   "data transfer",
+   "quarter",
+   "optimize",
+   "budget"
+  ]
+ },
+ {
+  "id": "data-ab-test",
+  "type": "data_table",
+  "level": "B2",
+  "title": "Kết quả A/B test trang thanh toán",
+  "materials": [
+   {
+    "kind": "table",
+    "columns": [
+     "Variant",
+     "Users",
+     "Purchases",
+     "Conversion",
+     "Avg. order ($)",
+     "p-value"
+    ],
+    "rows": [
+     [
+      "A: current checkout",
+      "48,210",
+      "2,410",
+      "5.0%",
+      "38.2",
+      "-"
+     ],
+     [
+      "B: one-page checkout",
+      "47,980",
+      "2,735",
+      "5.7%",
+      "36.9",
+      "0.003"
+     ],
+     [
+      "C: B + saved cards",
+      "12,050",
+      "742",
+      "6.2%",
+      "37.5",
+      "0.04 (small sample)"
+     ]
+    ],
+    "caption": "Checkout experiment, 14 days, Oct 2026"
+   }
+  ],
+  "part1": [
+   "Have you ever bought something online and given up at the payment step?",
+   "Do you like trying new versions of apps?",
+   "How do you usually make decisions: with data or intuition?"
+  ],
+  "cue": {
+   "prompt": "Describe the results of this experiment.",
+   "points": [
+    "what was tested",
+    "which variant performed best",
+    "why variant C should be treated carefully",
+    "what you would recommend to the product team"
+   ]
+  },
+  "part3": [
+   "Why is a higher conversion rate not always better for the business?",
+   "What does a p-value tell us, in simple words?",
+   "How long should an experiment run?",
+   "Can A/B testing be unethical? Give an example."
+  ],
+  "vocab": [
+   "variant",
+   "conversion rate",
+   "statistically significant",
+   "sample size",
+   "trade-off"
+  ]
+ },
+ {
+  "id": "eval-classifiers",
+  "type": "eval_table",
+  "level": "B1",
+  "title": "So sánh 4 mô hình phân loại ticket",
+  "materials": [
+   {
+    "kind": "table",
+    "columns": [
+     "Model",
+     "Accuracy",
+     "F1 (macro)",
+     "Latency p95",
+     "Cost / 1M requests"
+    ],
+    "rows": [
+     [
+      "Logistic regression",
+      "0.81",
+      "0.74",
+      "3 ms",
+      "$2"
+     ],
+     [
+      "Gradient boosting",
+      "0.87",
+      "0.82",
+      "12 ms",
+      "$5"
+     ],
+     [
+      "Fine-tuned BERT",
+      "0.92",
+      "0.89",
+      "85 ms",
+      "$40"
+     ],
+     [
+      "LLM zero-shot (API)",
+      "0.89",
+      "0.86",
+      "900 ms",
+      "$600"
+     ]
+    ],
+    "caption": "Support ticket classification, test set of 12,000 tickets, 8 classes"
+   }
+  ],
+  "part1": [
+   "Do you contact customer support often?",
+   "Have you compared tools or models before choosing one?",
+   "Do you prefer fast or accurate tools?"
+  ],
+  "cue": {
+   "prompt": "Describe this evaluation table.",
+   "points": [
+    "what task the models solve",
+    "which model is the most accurate",
+    "the trade-offs in speed and cost",
+    "which model you would put in production and why"
+   ]
+  },
+  "part3": [
+   "Why might a team choose a weaker model in production?",
+   "Why is F1 lower than accuracy for every model here?",
+   "When would using an LLM API be the right choice?",
+   "What would happen if the type of tickets changed a lot after deployment?"
+  ],
+  "vocab": [
+   "accuracy",
+   "F1 score",
+   "latency",
+   "trade-off",
+   "baseline",
+   "outperform"
+  ]
+ },
+ {
+  "id": "eval-confusion",
+  "type": "eval_table",
+  "level": "B2",
+  "title": "Confusion matrix mô hình phát hiện gian lận",
+  "materials": [
+   {
+    "kind": "table",
+    "columns": [
+     "",
+     "Predicted: fraud",
+     "Predicted: normal"
+    ],
+    "rows": [
+     [
+      "Actual: fraud",
+      "410 (TP)",
+      "90 (FN)"
+     ],
+     [
+      "Actual: normal",
+      "1,590 (FP)",
+      "97,910 (TN)"
+     ]
+    ],
+    "caption": "Fraud detection on 100,000 card transactions"
+   },
+   {
+    "kind": "table",
+    "columns": [
+     "Metric",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Precision",
+      "0.205"
+     ],
+     [
+      "Recall",
+      "0.82"
+     ],
+     [
+      "Accuracy",
+      "0.983"
+     ],
+     [
+      "Cost per missed fraud",
+      "~$450"
+     ],
+     [
+      "Cost per false alarm",
+      "~$3 (manual check)"
+     ]
+    ],
+    "caption": "Metrics"
+   }
+  ],
+  "part1": [
+   "Have you ever had your bank card blocked by mistake?",
+   "Do you think banks use AI a lot?",
+   "Do you check your bank transactions often?"
+  ],
+  "cue": {
+   "prompt": "Explain this confusion matrix and the metrics.",
+   "points": [
+    "what each cell means",
+    "why accuracy looks high but can be misleading",
+    "the difference between precision and recall here",
+    "whether this model is useful for the bank"
+   ]
+  },
+  "part3": [
+   "Which is worse for a bank: a missed fraud or a false alarm? Why?",
+   "How would you change the threshold of this model?",
+   "Why are imbalanced datasets difficult?",
+   "How should a bank explain a blocked transaction to customers?"
+  ],
+  "vocab": [
+   "confusion matrix",
+   "precision",
+   "recall",
+   "false positive",
+   "imbalanced data",
+   "threshold"
+  ]
+ },
+ {
+  "id": "eval-llm-benchmark",
+  "type": "eval_table",
+  "level": "B2",
+  "title": "Đánh giá 3 LLM cho trợ lý lập trình",
+  "materials": [
+   {
+    "kind": "table",
+    "columns": [
+     "Model",
+     "Pass@1 (code tests)",
+     "Hallucinated APIs",
+     "Avg. latency",
+     "Price / 1M tokens",
+     "Context window"
+    ],
+    "rows": [
+     [
+      "Model X (large)",
+      "71%",
+      "4%",
+      "6.1 s",
+      "$15",
+      "200k"
+     ],
+     [
+      "Model Y (medium)",
+      "63%",
+      "7%",
+      "2.3 s",
+      "$3",
+      "128k"
+     ],
+     [
+      "Model Z (open, self-hosted)",
+      "55%",
+      "11%",
+      "1.8 s",
+      "GPU cost only",
+      "32k"
+     ]
+    ],
+    "caption": "Internal benchmark: 500 coding tasks from our own repositories"
+   }
+  ],
+  "part1": [
+   "Do you use AI tools when you write code?",
+   "What do you like or dislike about them?",
+   "Do you think AI will write most code in the future?"
+  ],
+  "cue": {
+   "prompt": "Describe this LLM evaluation.",
+   "points": [
+    "how the models were tested",
+    "which model is best for quality",
+    "what 'hallucinated APIs' means and why it matters",
+    "which model you would choose for your team"
+   ]
+  },
+  "part3": [
+   "Why is an internal benchmark better than public leaderboards?",
+   "What are the pros and cons of self-hosting a model?",
+   "How should developers check AI-generated code?",
+   "Will junior developers learn less if they rely on AI?"
+  ],
+  "vocab": [
+   "benchmark",
+   "pass rate",
+   "hallucination",
+   "context window",
+   "self-hosted"
+  ]
+ },
+ {
+  "id": "art-postmortem",
+  "type": "tech_article",
+  "level": "B1",
+  "title": "Báo cáo sự cố (postmortem): sập cơ sở dữ liệu",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Postmortem",
+    "body": "Incident summary — Checkout outage, 14 Oct 2026\n\nWhat happened: From 20:05 to 21:10, customers could not complete payments. A database migration added an index to the orders table during peak hours. The table was locked for 65 minutes, and checkout requests timed out.\n\nImpact: about 9,800 failed orders, estimated $310,000 in lost sales. No data was lost.\n\nDetection: Alerts fired after 12 minutes because the error threshold was set too high.\n\nRoot cause: The migration was not reviewed for locking behaviour and was run without a maintenance window.\n\nActions: (1) run schema changes only with online migration tools; (2) lower the checkout error alert threshold; (3) add a 'risky migration' checklist to code review."
+   }
+  ],
+  "part1": [
+   "Have you ever experienced a big app or website going down?",
+   "How do you feel when you make a mistake at work?",
+   "Do you think it is important to write reports after problems?"
+  ],
+  "cue": {
+   "prompt": "Summarise this incident report.",
+   "points": [
+    "what went wrong and when",
+    "the impact on customers and the business",
+    "the root cause",
+    "the actions the team will take"
+   ]
+  },
+  "part3": [
+   "Why do good teams write 'blameless' postmortems?",
+   "Which action in this report is the most important, in your opinion?",
+   "How can teams balance speed and safety when releasing changes?",
+   "Should customers be told the details of an outage?"
+  ],
+  "vocab": [
+   "outage",
+   "root cause",
+   "impact",
+   "migration",
+   "blameless",
+   "prevent"
+  ]
+ },
+ {
+  "id": "art-microservices",
+  "type": "tech_article",
+  "level": "B2",
+  "title": "Bài blog: vì sao chúng tôi quay lại kiến trúc monolith",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Engineering blog",
+    "body": "Three years ago we split our product into 40 microservices. Last quarter we merged most of them back into a modular monolith. Here is why.\n\nFirst, our team is only 18 engineers. Each service had its own pipeline, alerts and on-call rotation, so we spent about 30% of our time on infrastructure instead of features. Second, many features touched five or six services, which made releases slow and debugging painful. Third, our cloud bill was high because each service ran with spare capacity.\n\nThe monolith is not a step back. We kept clear module boundaries, one database schema per module, and we still run two services separately: search and video processing, because they scale very differently.\n\nSince the change, deployment time dropped from 45 to 12 minutes and incidents fell by 40%. Microservices solve organisational problems of large companies. For a small team, they can create more problems than they solve."
+   }
+  ],
+  "part1": [
+   "Do you read technical blogs? Which ones?",
+   "Do you prefer working in small or big teams?",
+   "Have you ever changed your mind about a technology?"
+  ],
+  "cue": {
+   "prompt": "Summarise the main argument of this article.",
+   "points": [
+    "what the company changed",
+    "the three problems with microservices",
+    "what they kept separate and why",
+    "the results after the change"
+   ]
+  },
+  "part3": [
+   "Do you agree that microservices are mainly for large companies?",
+   "What problems could the monolith bring later?",
+   "How should a team decide on its architecture?",
+   "Why do engineers sometimes follow technology trends too quickly?"
+  ],
+  "vocab": [
+   "modular monolith",
+   "overhead",
+   "on-call",
+   "scale independently",
+   "trade-off"
+  ]
+ },
+ {
+  "id": "art-ai-policy",
+  "type": "tech_article",
+  "level": "B1",
+  "title": "Quy định dùng AI trong công ty",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Company memo",
+    "body": "Internal memo: Using AI assistants at work (v1.2)\n\n1. Allowed: drafting emails, summarising public documents, explaining code, writing unit tests.\n2. Not allowed: pasting customer personal data, passwords, API keys or unreleased financial results into external AI tools.\n3. All AI-generated code must be reviewed by a human and pass normal tests before merge.\n4. Use the company-approved tool (hosted in our own cloud) for any internal documents.\n5. If you are unsure, ask the security team before using a new AI tool.\n\nWhy: last month an employee pasted a customer list into a public chatbot. No harm was found, but we must protect customer data and follow data protection law."
+   }
+  ],
+  "part1": [
+   "Does your company or school have rules about using AI?",
+   "What do you use AI tools for?",
+   "Do you think rules make work slower?"
+  ],
+  "cue": {
+   "prompt": "Explain this company policy.",
+   "points": [
+    "what employees are allowed to do with AI",
+    "what is not allowed",
+    "the rule about AI-generated code",
+    "why the company wrote this policy"
+   ]
+  },
+  "part3": [
+   "Are these rules too strict or too relaxed, in your opinion?",
+   "How can a company check that people follow such rules?",
+   "Who is responsible if AI-generated code causes a bug?",
+   "How will AI policies change in the next five years?"
+  ],
+  "vocab": [
+   "policy",
+   "personal data",
+   "approved tool",
+   "comply with",
+   "sensitive"
+  ]
+ },
+ {
+  "id": "paper-lora",
+  "type": "research_paper",
+  "level": "B2",
+  "title": "Bài báo: fine-tuning LLM hiệu quả với LoRA",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Abstract",
+    "body": "Abstract. Fine-tuning large language models for a specific domain is expensive because all parameters must be updated. We study low-rank adaptation (LoRA) for legal question answering in Vietnamese. We fine-tune a 7B-parameter model by training only 0.3% of its parameters. On our new benchmark of 2,400 legal questions, LoRA reaches 78.4% accuracy, compared with 79.1% for full fine-tuning and 61.2% for the base model, while using 6x less GPU memory and 4x less training time. However, performance drops on questions that require reasoning across several laws. We release our dataset and code."
+   },
+   {
+    "kind": "table",
+    "columns": [
+     "Method",
+     "Accuracy",
+     "GPU memory",
+     "Training time"
+    ],
+    "rows": [
+     [
+      "Base model (no tuning)",
+      "61.2%",
+      "-",
+      "-"
+     ],
+     [
+      "Full fine-tuning",
+      "79.1%",
+      "8 × 80 GB",
+      "20 h"
+     ],
+     [
+      "LoRA (rank 16)",
+      "78.4%",
+      "1 × 80 GB",
+      "5 h"
+     ]
+    ],
+    "caption": "Table 2: Main results"
+   }
+  ],
+  "part1": [
+   "Do you read research papers? In English or Vietnamese?",
+   "What is the hardest part of reading a paper for you?",
+   "Have you ever presented a paper to others?"
+  ],
+  "cue": {
+   "prompt": "Present this paper as if in a reading group.",
+   "points": [
+    "the problem the paper addresses",
+    "the method in simple words",
+    "the main results",
+    "one limitation the authors mention"
+   ]
+  },
+  "part3": [
+   "Why is a 0.7% drop in accuracy acceptable here?",
+   "What other domains could use this method?",
+   "Why is releasing the dataset and code important?",
+   "Would you trust an AI to answer legal questions? Why?"
+  ],
+  "vocab": [
+   "fine-tuning",
+   "parameter",
+   "benchmark",
+   "limitation",
+   "we propose",
+   "compared with"
+  ]
+ },
+ {
+  "id": "paper-time-series",
+  "type": "research_paper",
+  "level": "B2",
+  "title": "Bài báo: dự báo nhu cầu điện bằng Transformer",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Abstract",
+    "body": "Abstract. Accurate short-term electricity demand forecasting helps grid operators reduce costs. We compare a Transformer-based model with LSTM and gradient boosting on 5 years of hourly demand data from three cities, using weather and holiday features. The Transformer achieves the lowest error for 24-hour forecasts (MAPE 3.1% vs. 3.8% for LSTM), but gradient boosting is best for 1-hour forecasts and trains 20 times faster. All models perform poorly during extreme heat waves, which are rare in the training data. We suggest combining models depending on the forecast horizon."
+   },
+   {
+    "kind": "table",
+    "columns": [
+     "Model",
+     "MAPE 1h",
+     "MAPE 24h",
+     "Training time"
+    ],
+    "rows": [
+     [
+      "Gradient boosting",
+      "1.9%",
+      "4.2%",
+      "6 min"
+     ],
+     [
+      "LSTM",
+      "2.4%",
+      "3.8%",
+      "1.5 h"
+     ],
+     [
+      "Transformer",
+      "2.3%",
+      "3.1%",
+      "2 h"
+     ]
+    ],
+    "caption": "Table 3: Forecast error (lower is better)"
+   }
+  ],
+  "part1": [
+   "Do you think about how much electricity you use?",
+   "Have you ever worked with time-series data?",
+   "Do you prefer theory or practical results in papers?"
+  ],
+  "cue": {
+   "prompt": "Summarise this paper for your team.",
+   "points": [
+    "the goal of the study",
+    "the data and models compared",
+    "the main findings for short and long forecasts",
+    "the weakness during heat waves"
+   ]
+  },
+  "part3": [
+   "Why do models perform poorly on rare events?",
+   "Is it a good idea to combine several models? Why?",
+   "How could this research help a power company save money?",
+   "What extra data might improve the forecasts?"
+  ],
+  "vocab": [
+   "forecast",
+   "horizon",
+   "MAPE",
+   "rare events",
+   "outperform",
+   "in contrast"
+  ]
+ },
+ {
+  "id": "paper-fairness",
+  "type": "research_paper",
+  "level": "B1",
+  "title": "Bài báo: thiên lệch trong mô hình chấm điểm tín dụng",
+  "materials": [
+   {
+    "kind": "text",
+    "title": "Abstract",
+    "body": "Abstract. Machine learning models are widely used to approve loans. We audit a credit scoring model used by a mid-sized lender on 120,000 applications. Although the model does not use gender as an input, approval rates differ: 64% for men and 55% for women with similar income and credit history. We find that features such as job title and shopping categories act as proxies for gender. Removing these features reduces the gap to 2 percentage points while lowering overall accuracy by only 0.8%. We recommend regular fairness audits before and after deployment."
+   }
+  ],
+  "part1": [
+   "Have you ever applied for a loan or a credit card?",
+   "Do you think computers make fairer decisions than people?",
+   "What does 'fair' mean to you?"
+  ],
+  "cue": {
+   "prompt": "Explain the findings of this paper.",
+   "points": [
+    "what the researchers checked",
+    "the unfair result they found",
+    "why the model was unfair without using gender",
+    "the solution and its cost"
+   ]
+  },
+  "part3": [
+   "Who should be responsible for unfair AI decisions?",
+   "Is a small loss in accuracy worth better fairness? Why?",
+   "How can a company explain an AI loan decision to a customer?",
+   "Should governments regulate AI used in banking?"
+  ],
+  "vocab": [
+   "bias",
+   "proxy",
+   "audit",
+   "fairness",
+   "approval rate",
+   "percentage point"
+  ]
+ }
+]

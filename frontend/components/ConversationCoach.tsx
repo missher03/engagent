@@ -9,7 +9,13 @@ type Help = { say_vi: string; english?: string | null; steps?: { en: string; vi:
 type Reply = { reply_en: string; reply_vi?: string; correction?: Fix | null; help?: Help | null; mock?: boolean };
 type Msg = { role: "user" | "coach"; text: string; lang?: string; reply?: Reply; fix?: Fix | null };
 
-export default function ConversationCoach() {
+type Props = {
+  talkUrl?: string; summaryUrl?: string; extra?: Record<string, any>;
+  hideScenario?: boolean; autoStart?: boolean; emptyTitle?: string; emptyText?: string;
+};
+
+export default function ConversationCoach({ talkUrl = "/api/coach/talk", summaryUrl = "/api/coach/talk/summary", extra = {},
+  hideScenario = false, autoStart = false, emptyTitle, emptyText }: Props = {}) {
   const [scenarios, setScenarios] = useState<{ key: string; name: string }[]>([]);
   const [scenario, setScenario] = useState("free");
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -24,7 +30,8 @@ export default function ConversationCoach() {
   const heard = useRef("");
   const bottom = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { api("/api/coach/scenarios").then(setScenarios).catch(() => {}); }, []);
+  useEffect(() => { if (!hideScenario) api("/api/coach/scenarios").then(setScenarios).catch(() => {}); }, [hideScenario]);
+  useEffect(() => { if (autoStart) start(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs, loading, summary]);
 
   const started = msgs.length > 0;
@@ -41,7 +48,7 @@ export default function ConversationCoach() {
   async function ask(list: Msg[]) {
     setLoading("Cô Mai đang trả lời…"); setErr(null);
     try {
-      const r: Reply = await post("/api/coach/talk", { messages: payload(list), scenario });
+      const r: Reply = await post(talkUrl, { ...extra, messages: payload(list), scenario });
       // Lời sửa gắn vào câu vừa nói của người học
       const withFix = list.map((m, i) => (i === list.length - 1 && m.role === "user" ? { ...m, fix: r.correction || null } : m));
       setMsgs([...withFix, { role: "coach", text: r.reply_en, reply: r }]);
@@ -74,7 +81,7 @@ export default function ConversationCoach() {
   async function finish() {
     window.speechSynthesis?.cancel();
     setLoading("Đang tổng kết buổi nói…"); setErr(null);
-    try { setSummary(await post("/api/coach/talk/summary", { messages: payload(msgs), scenario })); }
+    try { setSummary(await post(summaryUrl, { ...extra, messages: payload(msgs), scenario })); }
     catch (e: any) { setErr(e.message); }
     setLoading("");
   }
@@ -84,9 +91,9 @@ export default function ConversationCoach() {
   return (
     <div className="coach">
       <div className="row">
-        <select value={scenario} onChange={(e) => setScenario(e.target.value)} disabled={started && !summary}>
+        {!hideScenario && <select value={scenario} onChange={(e) => setScenario(e.target.value)} disabled={started && !summary}>
           {(scenarios.length ? scenarios : [{ key: "free", name: "Trò chuyện tự do" }]).map((s) => <option key={s.key} value={s.key}>{s.name}</option>)}
-        </select>
+        </select>}
         {(!started || summary) && <button onClick={start} disabled={!!loading}><Icon name="chat" size={16} /> {summary ? "Bắt đầu buổi mới" : "Bắt đầu trò chuyện"}</button>}
         {started && !summary && <button className="ghost" onClick={finish} disabled={!!loading || userTurns === 0}>Kết thúc và nhận xét</button>}
       </div>
@@ -95,9 +102,9 @@ export default function ConversationCoach() {
         {!started && !loading && (
           <div className="chat-empty">
             <div className="ic" style={{ ["--c" as any]: "var(--c2)", margin: "0 auto 10px" }}><Icon name="chat" size={22} /></div>
-            <h3>Trò chuyện bằng tiếng Anh với Cô Mai</h3>
-            <p className="muted">Chọn tình huống rồi bấm Bắt đầu. Cô Mai sẽ hỏi, bạn trả lời bằng tiếng Anh (nút <b>Nói (EN)</b>).
-              Khi bí, bấm <b>Bí rồi, nói tiếng Việt</b>: Cô Mai chỉ cách nói rồi bạn thử lại. Lỗi được sửa nhẹ ngay dưới câu của bạn, cuối buổi có tổng kết.</p>
+            <h3>{emptyTitle || "Trò chuyện bằng tiếng Anh với Cô Mai"}</h3>
+            {emptyText ? <p className="muted">{emptyText}</p> : <p className="muted">Chọn tình huống rồi bấm Bắt đầu. Cô Mai sẽ hỏi, bạn trả lời bằng tiếng Anh (nút <b>Nói (EN)</b>).
+              Khi bí, bấm <b>Bí rồi, nói tiếng Việt</b>: Cô Mai chỉ cách nói rồi bạn thử lại. Lỗi được sửa nhẹ ngay dưới câu của bạn, cuối buổi có tổng kết.</p>}
           </div>
         )}
         {msgs.map((m, i) => m.role === "user" ? (

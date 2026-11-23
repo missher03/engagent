@@ -99,3 +99,12 @@ class Profile(SQLModel, table=True):
     thesis_summary: str = ""
     defense_date: Optional[str] = None
     common_errors: list = Field(default_factory=list, sa_column=Column(JSON))
+
+
+class ExamItem(SQLModel, table=True):
+    """Đề thi nói do AI sinh (đề làm sẵn nằm trong data/speaking_exams.json)."""
+
+    id: str = Field(primary_key=True)
+    type: str = Field(index=True)
+    data: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=now)

@@ -144,3 +144,32 @@ def test_conversation_mode(client):
     s = client.post("/api/coach/talk/summary", json={"messages": msgs, "scenario": "standup"}).json()
     assert s["summary_vi"]
     assert client.post("/api/coach/talk/summary", json={"messages": [], "scenario": "free"}).status_code == 400
+
+
+def test_speaking_exam_flow(client):
+    data = client.get("/api/exam/list").json()
+    assert len(data["types"]) == 8 and len(data["items"]) >= 24
+    eid = "eval-classifiers"
+    ex = client.get(f"/api/exam/{eid}").json()
+    assert ex["cue"]["points"] and ex["part3"]
+    f = client.post("/api/exam/followup", json={"exam_id": eid, "question": ex["part3"][0], "answer": "Because it is cheaper and faster for us"}).json()
+    assert "followup" in f
+    g = client.post("/api/exam/grade", json={"exam_id": eid, "answers": [
+        {"part": 2, "question": ex["cue"]["prompt"], "answer": "This table compares four models for ticket classification."}]}).json()
+    assert 4.0 <= g["overall"] <= 9.0
+    assert client.get("/api/exam/list").json()["items"][[i["id"] for i in data["items"]].index(eid)]["last_band"] == g["overall"]
+    assert client.post("/api/exam/generate", json={"type": "ai_flow"}).status_code == 400  # mock mode
+
+
+def test_doc_qa(client):
+    r = client.post("/api/docqa/read", data={"text": "Quarterly report: revenue grew 12% to $4.1M, churn fell from 5% to 3.8%. Next quarter we launch the AI assistant."}).json()
+    assert r["notes_en"] and r["title"]
+    files = {"file": ("notes.txt", b"Architecture: client -> API gateway -> services -> PostgreSQL. Cache with Redis for the catalog.", "text/plain")}
+    assert client.post("/api/docqa/read", files=files).status_code == 200
+    assert client.post("/api/docqa/read", data={"text": "short"}).status_code == 400
+    body = {"title": r["title"], "notes": r["notes_en"], "messages": []}
+    first = client.post("/api/docqa/talk", json=body).json()
+    assert first["reply_en"]
+    body["messages"] = [{"role": "coach", "content": first["reply_en"]}, {"role": "user", "content": "Revenue grew twelve percent."}]
+    assert client.post("/api/docqa/talk", json=body).json()["reply_en"]
+    assert client.post("/api/docqa/summary", json=body).json()["summary_vi"]

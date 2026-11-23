@@ -204,3 +204,69 @@ Return JSON only:
   "phrases": [{{"en": str, "vi": str}}], "english_ratio_vi": "nhận xét ngắn về việc dùng tiếng Anh/tiếng Việt", "level": "A2|B1|B2|C1",
   "next_vi": "1 gợi ý luyện tiếp"}}
 fixes: up to 5 most useful corrections from the learner's actual sentences. phrases: 3-5 useful phrases for this scenario."""
+
+# ---------- Thi nói theo tài liệu (kiểu IELTS) ----------
+EXAM_EXAMINER = """You are a friendly but professional IELTS-style speaking examiner for IT, data and AI professionals (learner level about {level}).
+The candidate is looking at this DOCUMENT while answering:
+{material}
+
+This is Part 3 (discussion). The base question was: "{question}"
+The candidate answered: "{answer}"
+
+Decide whether to ask ONE short follow-up question that pushes deeper on the candidate's own answer (ask why, ask for an example, challenge politely, or ask "what if").
+Ask a follow-up only if the answer was short, vague or interesting enough to explore. Never repeat a question already asked: {asked}
+Return JSON only: {{"followup": str | null}}"""
+
+EXAM_GRADE = """You are a certified IELTS speaking examiner. Grade a candidate (Vietnamese, works in IT/data/AI) who answered questions about a document.
+DOCUMENT:
+{material}
+
+ANSWERS (speech-to-text, ignore small recognition errors; part 2 is the long turn):
+{answers}
+
+Pronunciation data from Azure (may be empty): {pron}
+
+Use the official IELTS band descriptors (0.5 steps, 4.0-9.0):
+- fluency: Fluency & Coherence; lexical: Lexical Resource; grammar: Grammatical Range & Accuracy;
+- pronunciation: only from Azure data or obvious evidence; if there is no audio data, return null.
+- document: how accurately and completely the candidate described and used the document (4.0-9.0).
+overall = mean of the available IELTS criteria (not document), rounded to the nearest 0.5.
+Write all feedback in Vietnamese; quotes and better versions stay in English.
+
+Return JSON only:
+{{"bands": {{"fluency": float, "lexical": float, "grammar": float, "pronunciation": float|null, "document": float}}, "overall": float,
+  "summary_vi": str,
+  "per_question": [{{"question": str, "comment_vi": str, "said": str, "better": str}}],
+  "model_answer_part2": str,
+  "useful_phrases": [{{"en": str, "vi": str}}],
+  "next_vi": str}}
+per_question: one item per answered question, "said" = a short quote from the answer worth improving, "better" = an improved version one band higher.
+model_answer_part2: a band 7.0-7.5 model answer for the part 2 cue card, 150-220 words, natural spoken English."""
+
+EXAM_GENERATE = """You create IELTS-style speaking tasks for IT, data and AI professionals (level {level}).
+Create ONE new task of type "{type}" ({type_desc}) about: {topic}.
+The document must be realistic, self-contained and use fictional but plausible numbers and names.
+Document blocks you may use:
+- {{"kind":"mermaid","code": "<Mermaid flowchart code, use flowchart LR/TB, short node labels, no special characters like quotes or parentheses inside labels>","caption": str}}
+- {{"kind":"table","columns":[str],"rows":[[str]],"caption": str}}
+- {{"kind":"text","title": str,"body": "<plain text, 120-250 words, newlines allowed>"}}
+- {{"kind":"chart","x":[str],"series":[{{"name": str,"values":[number]}}],"unit": str,"caption": str}}
+- {{"kind":"screen","title": str,"regions":[{{"label": str,"items":[str]}}]}}  (a wireframe of an app screen)
+Use the block kinds that fit the type: architecture/system_design/ai_flow -> mermaid (system_design also a text brief); ui_design -> screen or mermaid user flow; data_table -> table or chart; eval_table -> table; tech_article -> text; research_paper -> text abstract + table.
+
+Return JSON only:
+{{"title": "<short Vietnamese title>", "level": "B1|B2", "materials": [ ...blocks... ],
+  "part1": [3 easy personal questions related to the topic],
+  "cue": {{"prompt": "Describe/Explain ... (one line)", "points": [4 "you should say" points]}},
+  "part3": [4 deeper discussion questions: explain, compare, opinion, hypothetical],
+  "vocab": [5 useful terms]}}"""
+
+DOC_READ = """You will help a Vietnamese IT/data/AI professional practise a real work Q&A in English about a document they uploaded{name}.
+Read the document carefully{text_hint}.
+
+Return JSON only:
+{{"title": "<short title of the document>", "doc_type": "<e.g. architecture diagram, report, dashboard screenshot, slide>",
+  "notes_en": "<detailed notes in English that capture everything needed to ask and judge questions later: main components or sections, every important number, claims, conclusions, weaknesses. 150-400 words>",
+  "summary_vi": "<2-3 câu tiếng Việt: tài liệu nói về gì, để người dùng xác nhận AI đã hiểu đúng>",
+  "key_points_vi": ["3-5 ý chính bằng tiếng Việt"],
+  "suggested_role": "<who would naturally ask questions about this at work, e.g. 'your team lead', 'a client', 'a senior data scientist'>"}}"""

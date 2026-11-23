@@ -123,3 +123,25 @@ def complete_json(
             last_err = e
             log.warning("LLM trả JSON không hợp lệ, thử lại: %s", text[:200])
     raise LLMError(f"LLM không trả JSON hợp lệ: {last_err}")
+
+
+def chat_json(
+    messages: list[dict],
+    *,
+    mock: Callable[[], Any],
+    system: str | None = None,
+    smart: bool = False,
+    max_tokens: int = 3000,
+    effort: str = "low",
+) -> Any:
+    """Như chat() nhưng đọc JSON từ câu trả lời; thiếu key -> mock(); thử lại 1 lần nếu JSON hỏng."""
+    if not get_settings().llm_enabled:
+        return mock()
+    last: Exception | None = None
+    for _ in range(2):
+        text = chat(messages, system=system, smart=smart, max_tokens=max_tokens, effort=effort)
+        try:
+            return extract_json(text)
+        except (json.JSONDecodeError, ValueError) as e:
+            last = e
+    raise LLMError(f"LLM không trả JSON hợp lệ: {last}")
