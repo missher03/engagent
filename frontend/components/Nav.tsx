@@ -6,7 +6,7 @@ import Icon from "./Icon";
 const GROUPS: { title: string; links: [string, string, string][] }[] = [
   { title: "", links: [["/", "Tổng quan", "home"]] },
   { title: "Từ vựng", links: [["/words", "Kho từ", "layers"], ["/review", "Ôn tập", "repeat"], ["/dictionary", "Tra từ", "search"]] },
-  { title: "Kỹ năng", links: [["/pronunciation", "Phát âm", "mic"], ["/lessons", "Nghe & đọc", "headphones"], ["/writing", "Viết", "pen"], ["/speaking", "Nói", "chat"], ["/examiner", "Hỏi đáp", "users"]] },
+  { title: "Kỹ năng", links: [["/pronunciation", "Phát âm", "mic"], ["/lessons", "Nghe & đọc", "headphones"], ["/writing", "Viết", "pen"], ["/speaking", "Nói", "chat"]] },
   { title: "", links: [["/profile", "Hồ sơ", "user"]] },
 ];
 

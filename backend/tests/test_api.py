@@ -173,3 +173,25 @@ def test_doc_qa(client):
     body["messages"] = [{"role": "coach", "content": first["reply_en"]}, {"role": "user", "content": "Revenue grew twelve percent."}]
     assert client.post("/api/docqa/talk", json=body).json()["reply_en"]
     assert client.post("/api/docqa/summary", json=body).json()["summary_vi"]
+
+
+def test_writing_ielts_flow(client):
+    data = client.get("/api/write/list").json()
+    assert len(data["topics"]["quick"]) == 12 and len(data["topics"]["deep"]) == 12
+    assert sum(i["mode"] == "quick" for i in data["items"]) >= 36 and sum(i["mode"] == "deep" for i in data["items"]) >= 24
+    t = client.get("/api/write/task/d-hr-assistant").json()
+    assert t["sections"] and t["key_points"]
+    text = "\n\n".join(f"## {s['name']}\n{s['starter']} the HR assistant answers questions about leave and insurance with citations." for s in t["sections"])
+    g = client.post("/api/write/grade", json={"task_id": t["id"], "text": text}).json()
+    assert 4.0 <= g["overall"] <= 9.0 and g["attempt_id"]
+    assert client.post("/api/write/grade", json={"task_id": t["id"], "text": "too short"}).status_code == 400
+    hist = client.get("/api/write/history").json()
+    assert hist[0]["task"] == "d-hr-assistant" and hist[0]["mode"] == "deep"
+    a = client.get(f"/api/write/attempt/{hist[0]['id']}").json()
+    assert a["text"] == text
+    lst = client.get("/api/write/list").json()["items"]
+    assert next(i for i in lst if i["id"] == "d-hr-assistant")["last_band"] == g["overall"]
+    r = client.post("/api/write/chat", json={"task_id": "q-overfit-curves", "text": "", "messages": [{"role": "user", "content": "Đề này muốn gì?"}]}).json()
+    assert r["reply"]
+    assert client.post("/api/write/generate", json={"mode": "deep", "topic": "ai_agent"}).status_code == 400  # mock mode
+    assert client.get("/api/write/task/nope").status_code == 404

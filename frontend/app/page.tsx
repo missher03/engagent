@@ -8,12 +8,11 @@ const SKILLS: [string, string, string, string, string][] = [
   ["/words", "Kho từ vựng", "Hơn 2.000 thuật ngữ IT, AI, dữ liệu chia theo chủ đề nhỏ.", "layers", "var(--c1)"],
   ["/pronunciation", "Phát âm", "Đọc to, được chấm từng từ và từng âm.", "mic", "var(--c4)"],
   ["/lessons", "Nghe & đọc", "Bài đọc, hội thoại sinh từ chính các từ bạn đang học.", "headphones", "var(--c2)"],
-  ["/writing", "Viết", "Email, tóm tắt kết quả, abstract, có chấm theo tiêu chí.", "pen", "var(--c3)"],
-  ["/speaking", "Nói", "Trình bày slide, stand-up, mô tả biểu đồ.", "chat", "var(--c5)"],
-  ["/examiner", "Hỏi đáp kỹ thuật", "Luyện trả lời câu hỏi sau bài thuyết trình.", "users", "var(--c6)"],
+  ["/writing", "Viết", "Báo cáo ngắn và tài liệu thiết kế kiểu IELTS, chấm band 4.0-9.0.", "pen", "var(--c3)"],
+  ["/speaking", "Nói", "Trò chuyện, thi theo đề, hỏi đáp về tài liệu của bạn.", "chat", "var(--c5)"],
 ];
 
-const LABELS: Record<string, string> = { writing: "Viết", speaking: "Nói", pronunciation: "Phát âm", examiner: "Hỏi đáp", sentence: "Đặt câu", "sentence-writing": "Đặt câu (viết)", "sentence-speaking": "Đặt câu (nói)" };
+const LABELS: Record<string, string> = { writing: "Viết", speaking: "Nói", pronunciation: "Phát âm", examiner: "Hỏi đáp", write: "Viết", exam: "Thi nói", docqa: "Hỏi đáp tài liệu", sentence: "Đặt câu", "sentence-writing": "Đặt câu (viết)", "sentence-speaking": "Đặt câu (nói)" };
 
 export default function Home() {
   const [health, setHealth] = useState<any>(null);

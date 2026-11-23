@@ -75,7 +75,7 @@ function Chart({ b }: { b: Extract<Block, { kind: "chart" }> }) {
         {ticks.map((t, i) => (
           <g key={i}>
             <line x1={P.l} x2={W - P.r} y1={y(t)} y2={y(t)} stroke="var(--line)" />
-            <text x={P.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--muted)">{Math.round(t)}</text>
+            <text x={P.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--muted)">{max - min < 10 ? Number(t.toFixed(2)) : Math.round(t)}</text>
           </g>
         ))}
         {b.x.map((lab, i) => <text key={lab} x={x(i)} y={H - 10} textAnchor="middle" fontSize="11" fill="var(--muted)">{lab}</text>)}

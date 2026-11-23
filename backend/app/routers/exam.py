@@ -40,7 +40,7 @@ def _level(session: Session) -> str:
 
 
 def _all_exams(session: Session) -> list[dict]:
-    gen = [{**e.data, "id": e.id, "type": e.type, "generated": True} for e in session.exec(select(ExamItem).order_by(ExamItem.created_at.desc())).all()]
+    gen = [{**e.data, "id": e.id, "type": e.type, "generated": True} for e in session.exec(select(ExamItem).order_by(ExamItem.created_at.desc())).all() if not e.type.startswith("write")]
     return BUILTIN + gen
 
 
