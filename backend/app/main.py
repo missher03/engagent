@@ -13,6 +13,7 @@ from .db import engine, init_db
 from .models import Word
 from .routers import learn, speech, vocab
 from .services.tts import audio_dir
+from .services.vocab_data import sync_words
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,6 +33,8 @@ def seed_words() -> None:
 async def lifespan(app: FastAPI):
     init_db()
     seed_words()
+    with Session(engine) as s:
+        logging.getLogger("engagent").info("Kho từ: %s", sync_words(s))
     yield
 
 

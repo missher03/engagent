@@ -66,11 +66,16 @@ class GenerateLesson(BaseModel):
     level: str = "B1"
     format: str = "research abstract"
     target_words: list[str] = []  # trống -> tự chọn từ chủ đề + sổ từ
+    subtopic: Optional[str] = None  # vd "ml-eval": lấy từ của chủ đề nhỏ trong kho 2000 từ
     with_audio: bool = True
 
 
-def pick_words(session: Session, topic_id: int, n_target: int = 8, n_review: int = 6) -> tuple[list[str], list[str]]:
-    topic_words = [w.term for w in session.exec(select(Word).where(Word.topic == topic_id)).all()]
+def pick_words(session: Session, topic_id: int, n_target: int = 8, n_review: int = 6,
+               subtopic: Optional[str] = None) -> tuple[list[str], list[str]]:
+    if subtopic:
+        topic_words = [w.term for w in session.exec(select(Word)).all() if subtopic in (w.subtopics or [])]
+    else:
+        topic_words = [w.term for w in session.exec(select(Word).where(Word.topic == topic_id)).all()]
     random.shuffle(topic_words)
     due = session.exec(
         select(Word.term).join(Card, Card.word_id == Word.id).where(Card.due <= now()).limit(n_review)
@@ -80,8 +85,14 @@ def pick_words(session: Session, topic_id: int, n_target: int = 8, n_review: int
 
 @router.post("/lessons/generate")
 def generate_lesson(body: GenerateLesson, session: Session = Depends(get_session)):
-    topic = next((t for t in TOPICS if t["id"] == body.topic_id), TOPICS[0])
-    target, review = (body.target_words, []) if body.target_words else pick_words(session, topic["id"])
+    topic = dict(next((t for t in TOPICS if t["id"] == body.topic_id), TOPICS[0]))
+    if body.subtopic:
+        from ..services.vocab_data import parse_taxonomy
+
+        name = next((st["name"] for c in parse_taxonomy() for st in c["subtopics"] if st["key"] == body.subtopic), None)
+        if name:
+            topic.update(name=f"{name} ({body.subtopic})", grammar=topic["grammar"])
+    target, review = (body.target_words, []) if body.target_words else pick_words(session, topic["id"], subtopic=body.subtopic)
     profile = get_profile(session)
     key = hashlib.sha256(json.dumps([topic["id"], body.level, body.format, sorted(target)]).encode()).hexdigest()
     cached = session.exec(select(Lesson).where(Lesson.cache_key == key)).first()

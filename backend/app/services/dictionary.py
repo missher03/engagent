@@ -2,6 +2,7 @@
 + Claude (nghĩa tiếng Việt theo ngữ cảnh DS/AI). Kết quả được lưu vào bảng Word (cache)."""
 from __future__ import annotations
 
+import json
 import logging
 
 import httpx
@@ -59,18 +60,23 @@ def fetch_related(term: str, max_items: int = 8) -> list[str]:
         return []
 
 
-def llm_meaning(term: str, context: str = "") -> dict:
-    return llm.complete_json(
-        prompts.WORD_MEANING.format(term=term, context=context or "(none)"),
-        mock=lambda: {
-            "meaning_vi": f"[mock] nghĩa tiếng Việt của '{term}' (cần ANTHROPIC_API_KEY)",
-            "definition_en": f"[mock] simple definition of {term}",
-            "example": f"In our project, {term} played an important role.",
-            "collocations": [],
-            "cefr": "B2",
-        },
-        max_tokens=800,
+def llm_entries(terms: list[str], subtopic: str = "general IT and data science", category: str = "IT") -> list[dict]:
+    """Sinh nội dung đầy đủ (nghĩa, IPA, trọng âm, cách dùng, ví dụ...) cho một lô từ."""
+    data = llm.complete_json(
+        prompts.WORD_BATCH.format(terms=json.dumps(terms, ensure_ascii=False), subtopic=subtopic, category=category),
+        mock=lambda: {"entries": [
+            {"term": t, "meaning_vi": f"[mock] nghĩa của '{t}' (chưa có key LLM)", "definition_en": None,
+             "example": f"In our project, {t} played an important role.", "collocations": [], "cefr": "B2"}
+            for t in terms]},
+        max_tokens=600 + 450 * len(terms),
     )
+    return data.get("entries", []) if isinstance(data, dict) else []
+
+
+def llm_meaning(term: str, context: str = "") -> dict:
+    hint = f"general IT/data science (context sentence: {context})" if context else "general IT and data science"
+    entries = llm_entries([term], subtopic=hint)
+    return entries[0] if entries else {}
 
 
 def lookup(term: str, context: str = "") -> dict:
@@ -79,12 +85,15 @@ def lookup(term: str, context: str = "") -> dict:
     meaning = llm_meaning(term, context)
     return {
         "term": term,
-        "ipa": base.get("ipa"),
+        "ipa": meaning.get("ipa") or base.get("ipa"),
+        "stress": meaning.get("stress"),
         "audio_url": base.get("audio_url"),
-        "part_of_speech": base.get("part_of_speech"),
-        "definition_en": base.get("definition_en") or meaning.get("definition_en"),
+        "part_of_speech": meaning.get("part_of_speech") or base.get("part_of_speech"),
+        "definition_en": meaning.get("definition_en") or base.get("definition_en"),
         "meaning_vi": meaning.get("meaning_vi"),
+        "usage_vi": meaning.get("usage_vi"),
         "example": meaning.get("example") or base.get("example"),
+        "example_vi": meaning.get("example_vi"),
         "collocations": meaning.get("collocations") or [],
         "cefr": meaning.get("cefr"),
         "related": fetch_related(term),

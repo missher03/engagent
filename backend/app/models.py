@@ -16,7 +16,12 @@ class Word(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     term: str = Field(index=True, unique=True)
     deck: str = Field(default="custom", index=True)  # awl | ml | finance | presentation | custom
-    topic: Optional[int] = None  # 1-12 theo bản đồ chủ đề
+    topic: Optional[int] = None  # 1-12 theo bản đồ chủ đề bài học
+    category: Optional[str] = Field(default=None, index=True)  # lĩnh vực: ai, ml, dl, ds, de, se...
+    subtopic: Optional[str] = Field(default=None, index=True)  # chủ đề nhỏ chính, vd "ml-eval"
+    subtopics: list = Field(default_factory=list, sa_column=Column(JSON))  # mọi chủ đề nhỏ chứa từ
+    part_of_speech: Optional[str] = None
+    stress: Optional[str] = None  # vd "vo-la-TIL-i-ty"
     cefr: Optional[str] = None  # B1 | B2 | C1
     kind: Optional[str] = None  # term | academic | phrase
     priority: int = 2  # 1 = bắt buộc cho luận văn
@@ -24,7 +29,9 @@ class Word(SQLModel, table=True):
     audio_url: Optional[str] = None
     definition_en: Optional[str] = None
     meaning_vi: Optional[str] = None
+    usage_vi: Optional[str] = None  # cách dùng, cấu trúc đi kèm, lưu ý
     example: Optional[str] = None
+    example_vi: Optional[str] = None
     collocations: list = Field(default_factory=list, sa_column=Column(JSON))
     enriched: bool = False  # đã tra từ điển + LLM chưa
 

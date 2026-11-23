@@ -105,3 +105,32 @@ SPEAKING_RUBRIC = """task: 2=missing main points, 3=main points with simple stru
 vocabulary: 2=avoids/misuses terms, 3=correct key terms, 4=precise terms and natural collocations, 5=adapts to audience.
 grammar: 2=frequent errors, 3=simple sentences correct, 4=good control incl. passive, conditionals, hedging, 5=varied complex sentences.
 pronunciation: 2=many hesitations, wrong stress, 3=understandable with accent, 4=steady pace, correct term stress, 5=natural, purposeful emphasis."""
+
+WORD_BATCH = """You are a bilingual (English-Vietnamese) dictionary editor writing a vocabulary course for Vietnamese learners at CEFR B1-B2 who work in IT, data science and AI.
+Topic of this batch: "{subtopic}" (field: {category}).
+
+For EACH term below, write an entry. Interpret the term in the sense used in this topic.
+- meaning_vi: short Vietnamese meaning for this IT/academic context (keep the English term in brackets if Vietnamese engineers usually say it in English).
+- definition_en: simple English definition, max 20 words, B1 vocabulary.
+- part_of_speech: noun | verb | adjective | adverb | phrase | phrasal verb | abbreviation | ...
+- ipa: American IPA in slashes (for phrases, IPA of the whole phrase; for abbreviations, how people say it).
+- stress: syllables with the stressed one in CAPITALS, e.g. "vo-la-TIL-i-ty", "DA-ta-set"; for phrases mark the main stress per word.
+- usage_vi: 1-2 sentences in Vietnamese on how to use it: common structure/preposition, countable or not, formal or informal, a typical mistake of Vietnamese learners if any.
+- collocations: 3 common collocations in this field.
+- example: one natural sentence (12-22 words) as used in a paper, a meeting, a report or a presentation in this field.
+- example_vi: Vietnamese translation of the example.
+- cefr: B1 | B2 | C1.
+
+TERMS: {terms}
+
+Return JSON only: {{"entries": [{{"term": str, "meaning_vi": str, "definition_en": str, "part_of_speech": str, "ipa": str, "stress": str, "usage_vi": str, "collocations": [str], "example": str, "example_vi": str, "cefr": str}}]}}
+Keep "term" exactly as given."""
+
+SENTENCE_CHECK = """You are an encouraging English tutor for a Vietnamese learner (CEFR {level}) in IT/data science.
+The learner must use the word "{term}" ({meaning_vi}) in their own sentence{mode_note}.
+
+Learner sentence: "{sentence}"
+
+Check: is "{term}" used with the right meaning, grammar and collocation? Is the whole sentence grammatical and natural?
+Return JSON only:
+{{"correct_usage": true|false, "score": 1-5, "feedback_vi": "1-3 câu nhận xét bằng tiếng Việt", "corrected": "the sentence corrected minimally (same as input if already correct)", "better": "a more natural B2 version", "errors": [{{"original": str, "correction": str, "explanation_vi": str}}]}}"""

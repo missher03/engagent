@@ -109,6 +109,18 @@ Model mặc định theo PRD: `claude-haiku-5-5` cho việc hàng loạt (giải
 
 Sau khi điền `ANTHROPIC_API_KEY`, gọi `POST /api/notebook/enrich-pending` (trong /docs) để tra lại nghĩa thật cho các từ đã thêm lúc còn mock.
 
+## Kho 2000 từ vựng
+
+Danh sách từ nằm trong `backend/app/data/vocab_taxonomy.txt`: 11 lĩnh vực (từ học thuật, AI, ML, DL, khoa học dữ liệu, data engineering, phần mềm, cloud/DevOps/MLOps, bảo mật/mạng, tài liệu và giao tiếp, tài chính - đầu tư), 42 chủ đề nhỏ, khoảng 2033 từ/cụm từ. Muốn thêm/bớt từ thì sửa file này (mỗi chủ đề một dòng `## khóa | Tên`, từ cách nhau bằng dấu phẩy) rồi khởi động lại backend.
+
+Nội dung từng từ (nghĩa tiếng Việt, định nghĩa tiếng Anh, từ loại, IPA, trọng âm, cách dùng, collocation, ví dụ + bản dịch, CEFR) có 3 cách sinh:
+
+1. **Sinh sẵn tất cả (khuyên dùng):** `python scripts/build_vocab.py` trong thư mục backend. Gọi LLM theo lô 12 từ, 4 lô song song, lưu dần vào `app/data/vocab_content.json`; bị ngắt thì chạy lại, nó làm tiếp phần còn thiếu. Thử trước: `python scripts/build_vocab.py --limit 30`. Xong thì khởi động lại uvicorn để nạp vào DB.
+2. **Theo chủ đề:** nút "Sinh nội dung cho N từ còn thiếu" trong trang chủ đề.
+3. **Theo từ:** mở trang chi tiết một từ chưa có nội dung, app tự sinh và lưu lại.
+
+Trang chi tiết từ (`/word/<id>`) có: nghe (giọng trình duyệt, tốc độ thường/chậm), luyện phát âm từ hoặc câu ví dụ (Azure), đặt câu có LLM chấm, luyện nói (nhận dạng giọng nói của Chrome/Edge rồi LLM chấm), và nút sang từ tiếp theo trong chủ đề. Trang Bài nghe/đọc có thể chọn chủ đề nhỏ để sinh bài từ đúng nhóm từ đó.
+
 ## Những gì đã làm và chưa làm
 
 Đã có:

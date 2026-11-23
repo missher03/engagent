@@ -13,13 +13,15 @@ export default function Lessons() {
   const [err, setErr] = useState<string | null>(null);
   const [showText, setShowText] = useState(true);
   const [picked, setPicked] = useState<Record<number, string>>({});
+  const [cats, setCats] = useState<any[]>([]);
+  const [subtopic, setSubtopic] = useState("");
 
-  useEffect(() => { api("/api/topics").then(setMeta); api("/api/lessons").then(setList); }, []);
+  useEffect(() => { api("/api/topics").then(setMeta); api("/api/lessons").then(setList); api("/api/categories").then((d) => setCats(d.categories)); }, []);
 
   async function generate() {
     setLoading(true); setErr(null); setPicked({});
     try {
-      const l = await post("/api/lessons/generate", { topic_id: topicId, level, format });
+      const l = await post("/api/lessons/generate", { topic_id: topicId, level, format, subtopic: subtopic || null });
       setLesson(l);
       api("/api/lessons").then(setList);
     } catch (e: any) { setErr(e.message); }
@@ -33,7 +35,12 @@ export default function Lessons() {
       <h1>Bài nghe / đọc từ từ vựng của bạn</h1>
       {meta && (
         <div className="row">
-          <select value={topicId} onChange={(e) => setTopicId(+e.target.value)}>
+          <select value={subtopic} onChange={(e) => setSubtopic(e.target.value)}>
+            <option value="">Từ theo chủ đề bài học ↓</option>
+            {cats.map((c) => <optgroup key={c.key} label={c.name}>
+              {c.subtopics.map((s: any) => <option key={s.key} value={s.key}>{s.name}</option>)}</optgroup>)}
+          </select>
+          <select value={topicId} onChange={(e) => setTopicId(+e.target.value)} disabled={!!subtopic}>
             {meta.topics.map((t: any) => <option key={t.id} value={t.id}>{t.id}. {t.name}</option>)}
           </select>
           <select value={level} onChange={(e) => setLevel(e.target.value)}><option>B1</option><option>B2</option></select>

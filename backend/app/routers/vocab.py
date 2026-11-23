@@ -10,25 +10,22 @@ from sqlmodel import Session, func, select
 
 from ..db import get_session
 from ..models import Card, ReviewLog, Word, now
-from ..services import dictionary, srs
+from ..services import dictionary, llm, prompts, srs, vocab_data
 
 router = APIRouter(prefix="/api", tags=["vocab"])
 
 
 def enrich(word: Word, session: Session, context: str = "") -> Word:
-    """Tra từ điển + LLM một lần rồi lưu lại (cache)."""
+    """Tra từ điển + LLM một lần rồi lưu lại (cache). Kết quả mock không được lưu."""
     if word.enriched:
         return word
     info = dictionary.lookup(word.term, context)
-    is_mock = (info.get("meaning_vi") or "").startswith("[mock]")
-    for f in ("ipa", "audio_url", "definition_en", "meaning_vi", "example", "collocations"):
-        current = getattr(word, f)
-        stale = isinstance(current, str) and current.startswith("[mock]")
-        if info.get(f) and (not current or stale):
+    if vocab_data.is_mock(info.get("meaning_vi")):
+        return word
+    for f in (*vocab_data.CONTENT_FIELDS, "audio_url"):
+        if info.get(f) and not getattr(word, f):
             setattr(word, f, info[f])
-    word.cefr = word.cefr or info.get("cefr")
-    # Bản mock vẫn lưu để app chạy được, nhưng enriched=False để lần sau có key sẽ tra lại.
-    word.enriched = not is_mock
+    word.enriched = bool(word.meaning_vi)
     session.add(word)
     session.commit()
     session.refresh(word)
@@ -61,18 +58,152 @@ def decks(session: Session = Depends(get_session)):
 @router.get("/words")
 def list_words(
     deck: Optional[str] = None, topic: Optional[int] = None, q: Optional[str] = None,
+    category: Optional[str] = None, subtopic: Optional[str] = None,
     session: Session = Depends(get_session),
 ):
     stmt = select(Word)
     if deck:
         stmt = stmt.where(Word.deck == deck)
+    if category:
+        stmt = stmt.where(Word.category == category)
     if topic:
         stmt = stmt.where(Word.topic == topic)
     if q:
         stmt = stmt.where(Word.term.contains(q))
     words = session.exec(stmt.order_by(Word.priority, Word.term)).all()
+    if subtopic:
+        order = {t.lower(): i for i, t in enumerate(_subtopic_terms(subtopic))}
+        words = sorted((w for w in words if subtopic in (w.subtopics or [])), key=lambda w: order.get(w.term.lower(), 9999))
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
     return [{**w.model_dump(), "in_notebook": w.id in in_nb} for w in words]
+
+
+def _taxonomy():
+    return vocab_data.parse_taxonomy()
+
+
+def _subtopic_terms(key: str) -> list[str]:
+    for c in _taxonomy():
+        for st in c["subtopics"]:
+            if st["key"] == key:
+                return st["terms"]
+    return []
+
+
+@router.get("/categories")
+def categories(session: Session = Depends(get_session)):
+    """Cây lĩnh vực > chủ đề nhỏ, kèm số từ, số từ đã có nội dung, số từ trong sổ."""
+    words = {w.term.lower(): w for w in session.exec(select(Word)).all()}
+    in_nb = {c.word_id for c in session.exec(select(Card)).all()}
+    out = []
+    for c in _taxonomy():
+        subs = []
+        for st in c["subtopics"]:
+            ws = [words.get(t.lower()) for t in st["terms"]]
+            ws = [w for w in ws if w]
+            subs.append({
+                "key": st["key"], "name": st["name"], "count": len(ws),
+                "ready": sum(1 for w in ws if w.enriched),
+                "in_notebook": sum(1 for w in ws if w.id in in_nb),
+                "preview": [w.term for w in ws[:6]],
+            })
+        out.append({"key": c["key"], "name": c["name"], "subtopics": subs, "count": sum(x["count"] for x in subs)})
+    tax_terms = {t.lower() for c in _taxonomy() for st in c["subtopics"] for t in st["terms"]}
+    tw = [w for k, w in words.items() if k in tax_terms]
+    return {"total": len(tw), "ready": sum(1 for w in tw if w.enriched), "categories": out}
+
+
+@router.get("/words/{word_id}")
+def word_detail(word_id: int, session: Session = Depends(get_session)):
+    """Chi tiết một từ; nếu chưa có nội dung thì tra ngay (LLM) và lưu lại."""
+    w = session.get(Word, word_id)
+    if not w:
+        raise HTTPException(404, "Không có từ này")
+    try:
+        enrich(w, session)
+    except llm.LLMError as e:
+        raise HTTPException(502, str(e)) from e
+    card = session.exec(select(Card).where(Card.word_id == w.id)).first()
+    return {**w.model_dump(), "in_notebook": bool(card), "card": card.model_dump() if card else None}
+
+
+@router.post("/subtopics/{key}/enrich")
+def enrich_subtopic(key: str, batch: int = 15, session: Session = Depends(get_session)):
+    """Sinh nội dung cho các từ chưa có trong một chủ đề nhỏ (gọi LLM theo lô)."""
+    terms = _subtopic_terms(key)
+    words = [w for w in session.exec(select(Word)).all() if key in (w.subtopics or []) and not w.enriched]
+    name = next((st["name"] for c in _taxonomy() for st in c["subtopics"] if st["key"] == key), key)
+    by_term = {w.term.lower(): w for w in words}
+    done = 0
+    try:
+        for i in range(0, len(words), batch):
+            chunk = [w.term for w in words[i : i + batch]]
+            for e in dictionary.llm_entries(chunk, subtopic=name, category=key.split("-")[0]):
+                w = by_term.get(str(e.get("term", "")).lower())
+                if not w or vocab_data.is_mock(e.get("meaning_vi")):
+                    continue
+                for f in vocab_data.CONTENT_FIELDS:
+                    if e.get(f) and not getattr(w, f):
+                        setattr(w, f, e[f])
+                w.enriched = bool(w.meaning_vi)
+                session.add(w)
+                done += 1
+            session.commit()
+    except llm.LLMError as e:
+        raise HTTPException(502, f"{e} (đã xong {done} từ)") from e
+    return {"subtopic": key, "terms": len(terms), "enriched_now": done}
+
+
+@router.post("/subtopics/{key}/notebook")
+def add_subtopic_to_notebook(key: str, session: Session = Depends(get_session)):
+    """Thêm cả chủ đề nhỏ vào sổ từ (tạo thẻ ôn cho mọi từ chưa có)."""
+    have = {c.word_id for c in session.exec(select(Card)).all()}
+    added = 0
+    for w in session.exec(select(Word)).all():
+        if key in (w.subtopics or []) and w.id not in have:
+            session.add(Card(word_id=w.id))
+            added += 1
+    session.commit()
+    return {"added": added}
+
+
+class SentenceIn(BaseModel):
+    sentence: str
+    mode: str = "writing"  # writing | speaking (câu nói đã chuyển thành chữ)
+
+
+@router.post("/words/{word_id}/sentence")
+def check_sentence(word_id: int, body: SentenceIn, session: Session = Depends(get_session)):
+    """Chấm câu người học tự đặt với từ (viết hoặc nói)."""
+    from ..models import Attempt, Profile
+
+    w = session.get(Word, word_id)
+    if not w:
+        raise HTTPException(404, "Không có từ này")
+    if len(body.sentence.split()) < 3:
+        raise HTTPException(400, "Câu quá ngắn")
+    profile = session.get(Profile, 1)
+    used = w.term.lower().split()[0][:5] in body.sentence.lower()
+    try:
+        result = llm.complete_json(
+            prompts.SENTENCE_CHECK.format(
+                level=profile.level if profile else "B1", term=w.term, meaning_vi=w.meaning_vi or "",
+                sentence=body.sentence,
+                mode_note=" (spoken, transcribed by speech recognition: ignore punctuation/capitalization)" if body.mode == "speaking" else "",
+            ),
+            mock=lambda: {
+                "correct_usage": used, "score": 3 if used else 1,
+                "feedback_vi": ("Câu có dùng từ. " if used else "Câu chưa dùng từ cần luyện. ") + "[mock] cần key LLM để chấm chi tiết.",
+                "corrected": body.sentence, "better": body.sentence, "errors": [],
+            },
+            max_tokens=1500,
+        )
+    except llm.LLMError as e:
+        raise HTTPException(502, str(e)) from e
+    session.add(Attempt(skill=f"sentence-{body.mode}", task=w.term, input_text=body.sentence,
+                        result=result, score=result.get("score")))
+    session.commit()
+    return result
 
 
 class AddWord(BaseModel):

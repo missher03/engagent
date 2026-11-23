@@ -53,3 +53,18 @@ def test_minimax_provider_builds_request(monkeypatch):
     assert captured["model"] == "MiniMax-M3.1-Flash"
     assert captured["max_tokens"] == 6000
     assert captured["output_config"] == {"effort": "low"}
+
+
+def test_taxonomy_categories_and_word_practice(client):
+    data = client.get("/api/categories").json()
+    cats = data["categories"]
+    assert data["total"] >= 2000 and len(cats) == 11
+    words = client.get("/api/words", params={"subtopic": "ml-eval"}).json()
+    assert words[0]["term"] == "evaluation metric"
+    wid = words[0]["id"]
+    d = client.get(f"/api/words/{wid}").json()
+    assert d["term"] == "evaluation metric" and not (d["meaning_vi"] or "").startswith("[mock]")
+    r = client.post(f"/api/words/{wid}/sentence", json={"sentence": "We chose F1 as the main evaluation metric for this task."}).json()
+    assert r["correct_usage"] is True
+    added = client.post("/api/subtopics/ml-eval/notebook").json()["added"]
+    assert added > 40

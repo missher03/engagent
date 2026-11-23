@@ -1,55 +1,37 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api, post } from "@/lib/api";
+import { api } from "@/lib/api";
 
-export default function Words() {
-  const [decks, setDecks] = useState<any[]>([]);
-  const [deck, setDeck] = useState("");
-  const [onlyNotebook, setOnlyNotebook] = useState(false);
-  const [words, setWords] = useState<any[]>([]);
-  const [busy, setBusy] = useState<number | null>(null);
+export default function Categories() {
+  const [data, setData] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { api("/api/categories").then(setData).catch((e) => setErr(e.message)); }, []);
 
-  const load = () => {
-    if (onlyNotebook) api("/api/notebook").then((w) => setWords(w.map((x: any) => ({ ...x, in_notebook: true }))));
-    else api(`/api/words${deck ? `?deck=${deck}` : ""}`).then(setWords);
-  };
-  useEffect(() => { api("/api/decks").then(setDecks); }, []);
-  useEffect(load, [deck, onlyNotebook]);
-
-  async function toggle(w: any) {
-    setBusy(w.id);
-    if (w.in_notebook) await api(`/api/notebook/${w.id}`, { method: "DELETE" });
-    else await post("/api/notebook", { term: w.term });
-    setBusy(null);
-    load();
-  }
+  if (err) return <p className="error">{err}</p>;
+  if (!data) return <p>Đang tải...</p>;
+  const { total, ready, categories: cats } = data;
 
   return (
     <>
-      <h1>Kho từ vựng</h1>
-      <div className="row">
-        <select value={deck} onChange={(e) => setDeck(e.target.value)} disabled={onlyNotebook}>
-          <option value="">Tất cả bộ</option>
-          {decks.map((d) => <option key={d.deck} value={d.deck}>{d.deck} ({d.count})</option>)}
-        </select>
-        <label><input type="checkbox" checked={onlyNotebook} onChange={(e) => setOnlyNotebook(e.target.checked)} /> Chỉ sổ từ của tôi</label>
-      </div>
-      <p className="muted">Thêm từ vào sổ sẽ tự tra nghĩa (lần đầu mất vài giây) và tạo thẻ ôn tập.</p>
-      <table>
-        <thead><tr><th>Từ</th><th>Nghĩa</th><th>Bộ</th><th></th></tr></thead>
-        <tbody>
-          {words.map((w) => (
-            <tr key={w.id}>
-              <td><b>{w.term}</b> {w.priority === 1 && <span className="tag">luận văn</span>}
-                {w.mastered && <span className="tag ok">đã thuộc</span>}</td>
-              <td>{w.meaning_vi || <span className="muted">—</span>}</td>
-              <td className="muted">{w.deck}{w.topic ? ` · chủ đề ${w.topic}` : ""}</td>
-              <td><button className={w.in_notebook ? "ghost" : ""} disabled={busy === w.id} onClick={() => toggle(w)}>
-                {busy === w.id ? "..." : w.in_notebook ? "Bỏ" : "+ Sổ"}</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h1>Kho từ vựng <span className="muted">{total} từ · {ready} đã có nội dung</span></h1>
+      <p className="muted">Chọn một chủ đề nhỏ để học: nghĩa, cách dùng, ví dụ, phát âm, đặt câu và luyện nói.
+        {ready < total && " Từ chưa có nội dung sẽ được sinh khi bạn mở (hoặc chạy scripts/build_vocab.py để sinh sẵn tất cả)."}</p>
+      {cats.map((c: any) => (
+        <section key={c.key}>
+          <h2>{c.name} <span className="muted">({c.count})</span></h2>
+          <div className="grid">
+            {c.subtopics.map((s: any) => (
+              <Link key={s.key} href={`/words/${s.key}`} className="card topic">
+                <b>{s.name}</b>
+                <div className="muted">{s.count} từ · {s.ready} sẵn sàng{s.in_notebook ? ` · ${s.in_notebook} trong sổ` : ""}</div>
+                <div className="bar"><span style={{ width: `${(100 * s.in_notebook) / Math.max(s.count, 1)}%` }} /></div>
+                <div className="muted small">{s.preview.join(", ")}…</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
     </>
   );
 }
