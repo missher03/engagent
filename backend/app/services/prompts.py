@@ -21,7 +21,7 @@ Requirements:
 - Use EVERY word in TARGET naturally, at least once. Use at least 4 words from REVIEW (if given).
 - Apart from TARGET and REVIEW, use only common words a {level} learner knows. At most {max_unknown_pct}% other words.
 - Include at least 3 examples of the grammar point: {grammar_focus}.
-- B1: sentences of about 15 words, clear main idea stated directly. B2: about 22 words, some nominalization, passive voice, hedging; one implied idea.
+- B1: sentences of about 15 words, clear main idea stated directly. B2: about 22 words, some nominalization, passive voice, hedging; one implied idea. C1: varied, sophisticated sentences, precise academic and technical vocabulary, nuance and implied reasoning.
 - All numbers are fictional and realistic. Do not name real funds or claim real market results.
 - For dialogues: write each line as "Name: text", include one interruption and one clarification question.
 
@@ -29,7 +29,7 @@ TARGET: {target_words}
 REVIEW: {review_words}
 
 Return JSON only:
-{{"title": str, "text": str, "words_used": [str], "grammar_examples": [str], "estimated_level": "B1|B2"}}"""
+{{"title": str, "text": str, "words_used": [str], "grammar_examples": [str], "estimated_level": "B1|B2|C1"}}"""
 
 GENERATE_QUIZ = """You are an English tutor. Based on the TEXT below, write a {n}-question quiz for a {level} learner.
 
@@ -182,7 +182,7 @@ The learner speaks to you by voice (speech-to-text, expect small recognition err
 Your job is to keep a natural spoken conversation going IN ENGLISH and get the learner to speak as much English as possible.
 For each learner message:
 - If it is "(start)": open the conversation for the scenario in 1-2 short sentences and ask one easy question.
-- If the learner writes in English: react naturally to WHAT they said (show interest, add a short comment), then ask ONE follow-up question. 1-3 short sentences total, {level} vocabulary, no idioms.
+- If the learner writes in English: react naturally to WHAT they said (show interest, add a short comment), then ask ONE follow-up question. 1-3 short sentences total, at {level} level (B1: simple common words, no idioms; B2: natural workplace English; C1: rich, idiomatic professional English and more challenging questions).
   If their English has a clear mistake, add ONE gentle "correction" (only the most useful one; ignore tiny issues and speech-recognition noise).
 - If the learner writes in Vietnamese (or mixes, or says they are stuck): they need help. Fill "help": confirm in Vietnamese what they mean, give a natural English way to say it, explain 2-4 chunks in Vietnamese, then in "reply_en" briefly encourage them to say it in English (e.g. "Great, try saying that in English!") and repeat your last question if needed.
 - If they ask a question about English (why, other ways to say...), answer in "help.say_vi" (Vietnamese) and keep "reply_en" short.
@@ -255,7 +255,7 @@ Document blocks you may use:
 Use the block kinds that fit the type: architecture/system_design/ai_flow -> mermaid (system_design also a text brief); ui_design -> screen or mermaid user flow; data_table -> table or chart; eval_table -> table; tech_article -> text; research_paper -> text abstract + table.
 
 Return JSON only:
-{{"title": "<short Vietnamese title>", "level": "B1|B2", "materials": [ ...blocks... ],
+{{"title": "<short Vietnamese title>", "level": "{level}", "materials": [ ...blocks... ],
   "part1": [3 easy personal questions related to the topic],
   "cue": {{"prompt": "Describe/Explain ... (one line)", "points": [4 "you should say" points]}},
   "part3": [4 deeper discussion questions: explain, compare, opinion, hypothetical],
@@ -332,6 +332,91 @@ Use fictional but plausible names and numbers. Material blocks you may use:
 - {{"kind":"chart","x":[str],"series":[{{"name": str,"values":[number]}}],"unit": str,"caption": str}}
 {mode_rules}
 Return JSON only:
-{{"title": "<short Vietnamese title>", "level": "B1|B2", "context": "<who you are and who reads it, English, one sentence>",
+{{"title": "<short Vietnamese title>", "level": "{level}", "context": "<who you are and who reads it, English, one sentence>",
   "prompt": "<the task in English, 2-4 sentences>", "prompt_vi": "<Vietnamese translation of the task>",
   "materials": [...], "key_points": [str], "sections": [{{"name": str, "hint_vi": str, "starter": str}}], "vocab": [6 useful terms]}}"""
+
+LEVEL_GUIDE = {
+    "B1": "CEFR B1: sentences of about 15 words, common vocabulary plus the key technical terms (explain each term the first time it appears), one idea per paragraph, concrete examples.",
+    "B2": "CEFR B2: sentences of 18-25 words, natural professional English, some passive voice, nominalization and hedging, technical terms used precisely, examples and comparisons.",
+    "C1": "CEFR C1: sophisticated, precise professional English like a senior engineer's blog or a good textbook: varied sentence structure, nuance, trade-offs, implicit reasoning, idiomatic collocations.",
+}
+LESSON_WORDS = {"B1": (600, 800), "B2": (800, 1000), "C1": (1000, 1200)}
+GOALS = {
+    "overview": "understand the big picture: what it is, why it exists, main concepts and when to use it",
+    "deep": "go deep technically: internals, architecture, configuration, performance, failure modes and trade-offs",
+    "interview": "prepare for a technical interview: core concepts, common questions, comparisons with alternatives, design scenarios",
+}
+
+STUDY_OUTLINE = """You design a short English reading-and-listening course that also teaches real technical knowledge.
+Learner: Vietnamese IT/data/AI professional, English level {level}. Topic requested: "{topic}". Goal: {goal}.
+
+SOURCE MATERIAL (may be empty; prefer it for facts, add your own accurate knowledge where it is missing):
+{sources}
+
+Plan {n} lessons that build from basic to advanced with no overlap. Each lesson must be teachable in {min_w}-{max_w} words.
+Return JSON only:
+{{"title": "<course title in English>", "summary_vi": "<2-3 câu tiếng Việt: khóa học dạy gì, cho ai>",
+  "lessons": [{{"title": str, "focus": "<one sentence in English: what this lesson explains>", "key_points": [4-6 short English points]}}]}}"""
+
+STUDY_LESSON = """Write lesson {idx} of the course "{course}" for a Vietnamese IT/data/AI professional learning English and the technology at the same time.
+Lesson title: {title}
+Focus: {focus}
+Key points to cover: {points}
+Other lessons in the course (do not repeat them in depth): {others}
+Language: {level_guide}
+Length: {min_w}-{max_w} words in total. Structure: an engaging introduction, 4-6 sections with clear headings, a real-world example or mini case study, a short summary.
+
+SOURCE MATERIAL (use it for facts, numbers and names; do not invent version numbers, prices or statistics; if unsure, describe them qualitatively):
+{sources}
+
+Return JSON only:
+{{"sections": [{{"heading": str, "paragraphs": [str]}}],
+  "glossary": [{{"term": str, "vi": "<nghĩa tiếng Việt ngắn>", "definition": "<simple English definition>"}}],
+  "takeaways_vi": [3-5 ý chính bằng tiếng Việt]}}
+glossary: 10-15 technical or academic terms used in the lesson that a {level} learner should learn."""
+
+STUDY_LISTEN = """Turn the lesson below into a listening script for a Vietnamese learner at English level {level}.
+Format: {fmt}. Keep all key facts, make it sound natural when spoken (contractions, signposting such as "so", "now, the interesting part is"),
+short sentences that are easy to follow by ear, {min_w}-{max_w} words.
+For a podcast: two hosts, Alex (curious, asks questions the learner would ask) and Sam (the expert). For a lecture: one speaker, Sam.
+
+LESSON:
+{lesson}
+
+Return JSON only:
+{{"lines": [{{"speaker": "Alex|Sam", "text": str}}]}}"""
+
+STUDY_QUIZ = """Write comprehension questions for the lesson below (learner level {level}). Questions test both English and the technical content.
+LESSON:
+{lesson}
+
+Return JSON only:
+{{"questions": [{{"type": "main idea|detail|inference|vocabulary", "question": str, "options": [4 strings], "answer": "<exactly one of options>", "explanation_vi": str}}],
+  "open": {{"question": "<one open question asking the learner to explain or apply a concept in 3-5 sentences>", "model_answer": str}}}}
+Write 8 multiple-choice questions: 2 main idea, 3 detail, 1 inference, 2 vocabulary in context."""
+
+STUDY_GRADE_OPEN = """A Vietnamese IT learner (English level {level}) answered an open question about a lesson.
+LESSON (summary): {lesson}
+QUESTION: {question}
+MODEL ANSWER: {model}
+LEARNER ANSWER: {answer}
+
+Return JSON only:
+{{"content_score": <0-10, technical correctness and completeness>, "language_band": <IELTS-style band 4.0-9.0 for the English>,
+  "feedback_vi": "<nhận xét ngắn về nội dung và tiếng Anh>", "corrected": "<the learner's answer rewritten in correct, natural English, same ideas>",
+  "missing_vi": [ý còn thiếu]}}"""
+
+STUDY_CHAT = """You are a friendly senior engineer and English tutor. The learner (Vietnamese, English level {level}) is studying the lesson below and asks questions.
+Answer accurately and concretely about the technology (you may go beyond the lesson with your own knowledge; say so when you do and keep it correct),
+or about English words and sentences in the lesson. Reply in the learner's language (Vietnamese if they write Vietnamese), keep technical terms in English,
+under 220 words, use short lists or a tiny example when it helps.
+
+COURSE: {course}
+LESSON: {title}
+{lesson}"""
+
+STUDY_TRANSLATE = """Translate this English paragraph from a technical lesson into natural Vietnamese for a learner. Keep technical terms in English
+in parentheses the first time, e.g. "phân vùng (partition)". Return only the translation.
+
+{text}"""

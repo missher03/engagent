@@ -195,3 +195,25 @@ def test_writing_ielts_flow(client):
     assert r["reply"]
     assert client.post("/api/write/generate", json={"mode": "deep", "topic": "ai_agent"}).status_code == 400  # mock mode
     assert client.get("/api/write/task/nope").status_code == 404
+
+
+def test_study_course_flow(client):
+    assert client.post("/api/study/courses", json={"topic": " "}).status_code == 400
+    c = client.post("/api/study/courses", json={"topic": "Kafka", "level": "C1", "lessons": 4}).json()
+    assert c["level"] == "C1" and len(c["lessons"]) == 4 and c["lessons"][0]["ready"] is False
+    les = client.get(f"/api/study/courses/{c['id']}/lessons/0").json()
+    assert les["content"]["sections"] and les["words"] > 50
+    q = client.post(f"/api/study/courses/{c['id']}/lessons/0/quiz").json()
+    assert q["questions"] and q["open"]
+    lis = client.post(f"/api/study/courses/{c['id']}/lessons/0/listening", json={"format": "lecture"}).json()
+    assert lis["lines"]
+    o = client.post(f"/api/study/courses/{c['id']}/lessons/0/open", json={"answer": "Kafka keeps events in ordered logs called topics."}).json()
+    assert o["feedback_vi"]
+    r = client.post(f"/api/study/courses/{c['id']}/lessons/0/chat", json={"messages": [{"role": "user", "content": "partition là gì?"}]}).json()
+    assert r["reply"]
+    assert client.post("/api/study/translate", json={"text": "Kafka stores events in topics."}).json()["vi"]
+    d = client.post(f"/api/study/courses/{c['id']}/lessons/0/done", json={"score": 7}).json()
+    assert d["lessons"][0]["done"] and d["lessons"][0]["score"] == 7
+    assert any(x["id"] == c["id"] for x in client.get("/api/study/courses").json())
+    assert client.delete(f"/api/study/courses/{c['id']}").json()["ok"]
+    assert client.get(f"/api/study/courses/{c['id']}").status_code == 404

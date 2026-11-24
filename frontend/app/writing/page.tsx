@@ -235,6 +235,7 @@ export default function Writing() {
   const [data, setData] = useState<ListData | null>(null);
   const [mode, setMode] = useState<Mode>("quick");
   const [topic, setTopic] = useState("all");
+  const [lvl, setLvl] = useState("all");
   const [task, setTask] = useState<Task | null>(null);
   const [initial, setInitial] = useState<{ text: string; result: any } | undefined>();
   const [history, setHistory] = useState<any[]>([]);
@@ -272,7 +273,7 @@ export default function Writing() {
 
   const topics = data?.topics[mode] || [];
   const topicName = useMemo(() => Object.fromEntries(topics.map((t) => [t.key, t.name])), [topics]);
-  const items = (data?.items || []).filter((i) => i.mode === mode && (topic === "all" || i.topic === topic));
+  const items = (data?.items || []).filter((i) => i.mode === mode && (topic === "all" || i.topic === topic) && (lvl === "all" || i.level === lvl));
   const done = (data?.items || []).filter((i) => i.last_band != null);
 
   if (task) return (<><div className="eyebrow">Kỹ năng · Viết</div><Workspace task={task} initial={initial} onBack={() => { setTask(null); load(); }} /></>);
@@ -300,6 +301,11 @@ export default function Writing() {
         {topics.map((t) => <span key={t.key} className={`chip ${topic === t.key ? "on" : ""}`} onClick={() => setTopic(t.key)}>{t.name}</span>)}
       </div>
 
+      <div className="row" style={{ margin: "-4px 0 14px" }}>
+        <span className="muted small">Mức:</span>
+        {["all", "B1", "B2", "C1"].map((l) => <span key={l} className={`chip ${lvl === l ? "on" : ""}`} onClick={() => setLvl(l)}>{l === "all" ? "Mọi mức" : l}</span>)}
+      </div>
+      {items.length === 0 && <p className="muted">Chưa có đề {lvl !== "all" ? `mức ${lvl} ` : ""}cho lựa chọn này. Bấm "Tạo đề" bên dưới: AI tạo đề theo trình độ bạn chọn ở menu bên trái.</p>}
       <div className="grid">
         {items.map((i) => (
           <div key={i.id} className="card exam-item" onClick={() => open(i.id)} style={{ margin: 0, cursor: "pointer" }}>

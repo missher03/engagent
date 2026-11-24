@@ -108,3 +108,17 @@ class ExamItem(SQLModel, table=True):
     type: str = Field(index=True)
     data: dict = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=now)
+
+
+class Course(SQLModel, table=True):
+    """Khóa học nghe/đọc theo chủ đề người học tự nhập (vd Kafka). Các bài nằm trong cột lessons (JSON), tạo dần."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    topic: str
+    title: str = ""
+    level: str = "B2"
+    goal: str = "overview"
+    summary_vi: str = ""
+    sources: list = Field(default_factory=list, sa_column=Column(JSON))   # [{title, url, text}]
+    lessons: list = Field(default_factory=list, sa_column=Column(JSON))   # [{title, focus, key_points, content, listening, quiz, done, score}]
+    created_at: datetime = Field(default_factory=now)

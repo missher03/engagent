@@ -113,6 +113,7 @@ def exam_generate(body: GenerateIn, session: Session = Depends(get_session)):
         raise HTTPException(502, str(e)) from e
     if not isinstance(data, dict) or not data.get("materials") or not data.get("cue"):
         raise HTTPException(502, "Đề sinh ra thiếu nội dung, hãy thử lại.")
+    data["level"] = _level(session)
     item = ExamItem(id=f"gen-{uuid.uuid4().hex[:8]}", type=body.type, data=data)
     session.add(item)
     session.commit()

@@ -25,6 +25,7 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "
 export default function SpeakingExam() {
   const [list, setList] = useState<{ types: any[]; items: any[] } | null>(null);
   const [filter, setFilter] = useState("all");
+  const [lvl, setLvl] = useState("all");
   const [exam, setExam] = useState<Exam | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [idx, setIdx] = useState(0);
@@ -109,7 +110,7 @@ export default function SpeakingExam() {
 
   // ---------- Danh sách đề ----------
   if (!exam) {
-    const items = (list?.items || []).filter((i) => filter === "all" || i.type === filter);
+    const items = (list?.items || []).filter((i) => (filter === "all" || i.type === filter) && (lvl === "all" || i.level === lvl));
     const typeName = (k: string) => list?.types.find((t) => t.key === k)?.name || k;
     return (
       <div>
@@ -117,6 +118,11 @@ export default function SpeakingExam() {
           <span className={`chip ${filter === "all" ? "on" : ""}`} onClick={() => setFilter("all")}>Tất cả</span>
           {list?.types.map((t) => <span key={t.key} className={`chip ${filter === t.key ? "on" : ""}`} onClick={() => setFilter(t.key)}>{t.name}</span>)}
         </div>
+        <div className="row" style={{ marginBottom: 12 }}>
+          <span className="muted small">Mức:</span>
+          {["all", "B1", "B2", "C1"].map((l) => <span key={l} className={`chip ${lvl === l ? "on" : ""}`} onClick={() => setLvl(l)}>{l === "all" ? "Mọi mức" : l}</span>)}
+        </div>
+        {items.length === 0 && <p className="muted">Chưa có đề {lvl !== "all" ? `mức ${lvl} ` : ""}cho lựa chọn này. Bấm "Sinh đề" bên dưới: AI tạo đề theo trình độ bạn chọn ở menu bên trái.</p>}
         <div className="row" style={{ marginBottom: 14 }}>
           <label><input type="checkbox" checked={quick} onChange={(e) => setQuick(e.target.checked)} /> Chế độ nhanh (chỉ Phần 2, ~3 phút)</label>
         </div>

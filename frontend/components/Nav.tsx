@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 
@@ -12,6 +14,12 @@ const GROUPS: { title: string; links: [string, string, string][] }[] = [
 
 export default function Nav() {
   const path = usePathname() || "/";
+  const [level, setLevel] = useState("");
+  useEffect(() => { api("/api/profile").then((p) => setLevel(p.level || "B1")).catch(() => {}); }, []);
+  async function choose(l: string) {
+    setLevel(l);
+    try { await api("/api/profile", { method: "PUT", body: JSON.stringify({ level: l }) }); window.dispatchEvent(new CustomEvent("level-change", { detail: l })); } catch { /* ignore */ }
+  }
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href) || (href === "/words" && path.startsWith("/word/")));
   return (
     <aside className="side">
@@ -31,6 +39,10 @@ export default function Nav() {
           </div>
         ))}
       </nav>
+      {level && <div className="level-switch" title="Trình độ dùng cho bài AI tạo, chấm điểm và trò chuyện">
+        <div className="navtitle">Trình độ</div>
+        <div className="seg">{["B1", "B2", "C1"].map((l) => <button key={l} className={level === l ? "on" : ""} onClick={() => choose(l)}>{l}</button>)}</div>
+      </div>}
     </aside>
   );
 }

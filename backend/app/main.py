@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 from .config import get_settings
 from .db import engine, init_db
 from .models import Word
-from .routers import coach, exam, learn, speech, vocab, writing
+from .routers import coach, exam, learn, speech, study, vocab, writing
 from .services.tts import audio_dir
 from .services.vocab_data import sync_words
 
@@ -52,6 +52,7 @@ app.include_router(learn.router)
 app.include_router(coach.router)
 app.include_router(exam.router)
 app.include_router(writing.router)
+app.include_router(study.router)
 app.mount("/audio", StaticFiles(directory=audio_dir()), name="audio")
 
 

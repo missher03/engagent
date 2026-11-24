@@ -148,7 +148,7 @@ def write_generate(body: GenIn, session: Session = Depends(get_session)):
         raise HTTPException(502, str(e)) from e
     if not isinstance(data, dict) or not data.get("prompt") or not data.get("materials"):
         raise HTTPException(502, "Đề sinh ra thiếu nội dung, hãy thử lại.")
-    data.update(mode=body.mode, topic=body.topic)
+    data.update(mode=body.mode, topic=body.topic, level=_level(session))
     item = ExamItem(id=f"wgen-{uuid.uuid4().hex[:8]}", type=f"write-{body.mode}", data=data)
     session.add(item)
     session.commit()
