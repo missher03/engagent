@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { cachedGet } from "@/lib/api";
 import Icon from "@/components/Icon";
 
 const COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)"];
@@ -9,7 +9,7 @@ const COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)",
 export default function Categories() {
   const [data, setData] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
-  useEffect(() => { api("/api/categories").then(setData).catch((e) => setErr(e.message)); }, []);
+  useEffect(() => { cachedGet("/api/categories", setData).catch((e) => setErr(e.message)); }, []);
 
   if (err) return <p className="error">{err}</p>;
   if (!data) return <p>Đang tải...</p>;

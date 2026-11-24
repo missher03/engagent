@@ -12,6 +12,7 @@ from sqlmodel import Session, func, select
 from ..db import get_session
 from ..models import Card, ReviewLog, Word, WordLookup, now
 from ..services import dictionary, llm, prompts, srs, vocab_data
+from ..services.wordcache import all_words
 
 def _get_profile(session):
     from .learn import get_profile
@@ -183,7 +184,7 @@ def lookup_vi(query: str, context: str, session: Session) -> dict:
         w = remember_lookup(session, existing.term if existing else term, info, existing)
         ensure_card(session, w)
         saved = {"id": w.id, "term": w.term}
-    words = {w.term.lower(): w for w in session.exec(select(Word)).all()}
+    words = {w.term.lower(): w for w in all_words(session)}
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
     q = query.lower()
     in_kho = [w for w in words.values() if w.meaning_vi and q in w.meaning_vi.lower()][:10]
@@ -233,7 +234,7 @@ def _taxonomy():
 
 def words_in_subtopic(session: Session, key: str) -> list[Word]:
     """Từ thuộc một chủ đề nhỏ: từ có sẵn theo thứ tự file, rồi đến từ bạn tự tra. Hỗ trợ cả chủ đề ảo my-*."""
-    allw = session.exec(select(Word)).all()
+    allw = all_words(session)
     if key in MY_SUBS:
         mine = my_lookups(session)
         ws = [w for w in allw if w.id in mine and (key == "my-lookups" or (w.source == "lookup" and w.category == "other"))]
@@ -253,7 +254,7 @@ def _subtopic_terms(key: str) -> list[str]:
 @router.get("/categories")
 def categories(session: Session = Depends(get_session)):
     """Cây lĩnh vực > chủ đề nhỏ, kèm số từ, số từ đã có nội dung, số từ trong sổ. Gồm cả từ bạn tự tra."""
-    allw = session.exec(select(Word)).all()
+    allw = all_words(session)
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
     mine = my_lookups(session)
     by_sub: dict[str, list[Word]] = {}

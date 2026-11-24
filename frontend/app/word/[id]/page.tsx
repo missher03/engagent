@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { api, post, speak } from "@/lib/api";
+import { cachedGet } from "@/lib/api";
 import { startDictation } from "@/lib/dictation";
 import Recorder from "@/components/Recorder";
 import Scores from "@/components/Scores";
@@ -30,7 +31,7 @@ function WordPage() {
     setW(null); setErr(null); setPron(null); setCheck(null); setSpeakCheck(null); setSentence(""); setSpoken("");
     api(`/api/words/${id}`).then(setW).catch((e) => setErr(e.message));
   }, [id]);
-  useEffect(() => { if (sub) api(`/api/words?subtopic=${sub}`).then(setSiblings); }, [sub]);
+  useEffect(() => { if (sub) cachedGet(`/api/words?subtopic=${sub}`, setSiblings); }, [sub]);
 
   if (err) return <p className="error">{err}</p>;
   if (!w) return <p>Đang tải (lần đầu sẽ sinh nội dung cho từ này)...</p>;

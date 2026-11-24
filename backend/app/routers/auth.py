@@ -36,7 +36,33 @@ def check_password(pw: str, stored: str) -> bool:
     return hmac.compare_digest(got, h)
 
 
+_token_cache: dict[str, tuple[int, float]] = {}  # token -> (user_id, hết hạn cache)
+_CACHE_SECS = 300
+
+
 def user_for_token(session: Session, token: str):
+    """Tra token -> user_id. Nhớ 5 phút trong RAM để mỗi request không phải hỏi CSDL một lần nữa."""
+    import time
+
+    hit = _token_cache.get(token)
+    if hit and hit[1] > time.monotonic():
+        return hit[0]
+    uid = _user_for_token_db(session, token)
+    if uid is not None:
+        if len(_token_cache) > 1000:
+            _token_cache.clear()
+        _token_cache[token] = (uid, time.monotonic() + _CACHE_SECS)
+    return uid
+
+
+def cached_uid(token: str):
+    import time
+
+    hit = _token_cache.get(token)
+    return hit[0] if hit and hit[1] > time.monotonic() else None
+
+
+def _user_for_token_db(session: Session, token: str):
     t = session.get(AuthToken, token)
     if not t:
         return None
@@ -106,6 +132,7 @@ def login(body: Credentials, session: Session = Depends(get_session)):
 @router.post("/logout")
 def logout(request: Request, session: Session = Depends(get_session)):
     token = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+    _token_cache.pop(token, None)
     t = session.get(AuthToken, token) if token else None
     if t:
         session.delete(t)

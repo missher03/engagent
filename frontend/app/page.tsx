@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { cachedGet } from "@/lib/api";
 import Icon from "@/components/Icon";
 
 const SKILLS: [string, string, string, string, string][] = [
@@ -21,9 +21,8 @@ export default function Home() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([api("/api/health"), api("/api/stats"), api("/api/progress")])
-      .then(([h, s, p]) => { setHealth(h); setStats(s); setProgress(p); })
-      .catch((e) => setErr(`Không kết nối được backend (${e.message}). Hãy chạy start-app.bat.`));
+    Promise.all([cachedGet("/api/health", setHealth), cachedGet("/api/stats", setStats), cachedGet("/api/progress", setProgress)])
+      .catch((e) => setErr(`Không kết nối được máy chủ (${e.message}). Thử tải lại trang sau ít phút.`));
   }, []);
 
   const hour = new Date().getHours();

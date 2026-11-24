@@ -12,7 +12,7 @@ function LoginForm() {
   const [password2, setPassword2] = useState("");
   const [code, setCode] = useState("");
   const [needCode, setNeedCode] = useState(false);
-  useEffect(() => { api("/api/auth/options").then((o) => setNeedCode(!!o.signup_code_required)).catch(() => {}); }, []);
+  useEffect(() => { api("/api/health").catch(() => {}); api("/api/auth/options").then((o) => setNeedCode(!!o.signup_code_required)).catch(() => {}); }, []);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 

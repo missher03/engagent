@@ -5,7 +5,9 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
 
@@ -55,6 +57,11 @@ class AuthMiddleware:
     def __init__(self, app):
         self.app = app
 
+    @staticmethod
+    def _lookup(token: str):
+        with Session(engine) as s:
+            return auth.user_for_token(s, token)
+
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
@@ -62,8 +69,9 @@ class AuthMiddleware:
         token = headers.get(b"authorization", b"").decode().removeprefix("Bearer ").strip()
         uid = None
         if token:
-            with Session(engine) as s:
-                uid = auth.user_for_token(s, token)
+            uid = auth.cached_uid(token)
+            if uid is None:
+                uid = await run_in_threadpool(self._lookup, token)
         path = scope.get("path", "")
         if uid is None and path.startswith("/api/") and not path.startswith(self.OPEN) and scope.get("method") != "OPTIONS":
             await JSONResponse({"detail": "Chưa đăng nhập"}, status_code=401)(scope, receive, send)
@@ -78,6 +86,7 @@ class AuthMiddleware:
 settings = get_settings()
 app = FastAPI(title="EngAgent API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(AuthMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.cors_origins.split(",")],

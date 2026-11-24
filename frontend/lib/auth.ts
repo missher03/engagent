@@ -13,7 +13,10 @@ export function saveSession(token: string, user: User) {
   try { localStorage.setItem(TOKEN, token); localStorage.setItem(USER, JSON.stringify(user)); } catch { /* ignore */ }
 }
 export function clearSession() {
-  try { localStorage.removeItem(TOKEN); localStorage.removeItem(USER); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(TOKEN); localStorage.removeItem(USER);
+    Object.keys(localStorage).filter((k) => k.startsWith("cache:")).forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
 }
 export function goLogin() {
   if (typeof window === "undefined" || window.location.pathname.startsWith("/login")) return;

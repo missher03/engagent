@@ -14,6 +14,7 @@ from sqlmodel import Session, select
 from ..db import get_session
 from ..models import Attempt, Card, Lesson, Profile, Word, now
 from ..services import content, llm, prompts, tts
+from ..services.wordcache import all_words
 
 router = APIRouter(prefix="/api", tags=["learn"])
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -118,7 +119,7 @@ class GenerateLesson(BaseModel):
 def pick_words(session: Session, topic_id: int, n_target: int = 8, n_review: int = 6,
                subtopic: Optional[str] = None) -> tuple[list[str], list[str]]:
     if subtopic:
-        topic_words = [w.term for w in session.exec(select(Word)).all() if subtopic in (w.subtopics or [])]
+        topic_words = [w.term for w in all_words(session) if subtopic in (w.subtopics or [])]
     else:
         topic_words = [w.term for w in session.exec(select(Word).where(Word.topic == topic_id)).all()]
     random.shuffle(topic_words)

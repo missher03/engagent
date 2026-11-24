@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { api, post, speak } from "@/lib/api";
+import { api, cachedGet, post, speak } from "@/lib/api";
 import Icon from "@/components/Icon";
 
 export default function Subtopic() {
@@ -12,10 +12,11 @@ export default function Subtopic() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = () => api(`/api/words?subtopic=${sub}`).then(setWords);
+  const load = () => cachedGet(`/api/words?subtopic=${sub}`, setWords);
   useEffect(() => {
+    setWords(null);
     load();
-    api("/api/categories").then((d) => {
+    cachedGet("/api/categories", (d: any) => {
       for (const c of d.categories) for (const s of c.subtopics) if (s.key === sub) setName(`${c.name} › ${s.name}`);
     });
   }, [sub]);
