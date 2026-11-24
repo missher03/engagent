@@ -35,6 +35,9 @@ async def lifespan(app: FastAPI):
     seed_words()
     with Session(engine) as s:
         logging.getLogger("engagent").info("Kho từ: %s", sync_words(s))
+        from .routers.vocab import backfill_lookup_cards
+
+        logging.getLogger("engagent").info("Thẻ ôn mới cho từ đã tra: %s", backfill_lookup_cards(s))
     yield
 
 

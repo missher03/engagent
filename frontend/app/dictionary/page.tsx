@@ -69,6 +69,7 @@ export default function Dictionary() {
         <div className="card">
           <h2 style={{ marginTop: 0 }}>“{res.query}” trong tiếng Anh</h2>
           {res.note_vi && <p className="muted">{res.note_vi}</p>}
+          {res.saved && <p className="ok small">✓ Đã lưu “{res.saved.term}” vào kho từ và danh sách ôn tập. Bấm “+ Thêm” ở từ khác nếu bạn muốn ôn thêm.</p>}
           {res.candidates.map((c: any) => (
             <div key={c.term} className="card">
               <div className="row" style={{ justifyContent: "space-between" }}>
@@ -79,7 +80,7 @@ export default function Dictionary() {
                 </div>
                 <div className="row">
                   <button className="ghost icon" onClick={() => speak(c.term)}>🔊</button>
-                  {c.in_notebook || addedVi[c.term] ? <span className="ok small">✓ trong sổ</span>
+                  {c.in_notebook || addedVi[c.term] ? <span className="ok small">✓ đang ôn</span>
                     : <button onClick={() => addTerm(c.term)}>+ Sổ từ</button>}
                 </div>
               </div>
@@ -107,7 +108,7 @@ export default function Dictionary() {
           </h2>
           <div className="row">
             {res.audio_url ? <audio controls src={res.audio_url} /> : <button className="ghost" onClick={() => speak(res.term)}>🔊 Nghe</button>}
-            {res.in_notebook || added ? <span className="ok">✓ Đã có trong sổ từ</span> : <button onClick={add}>+ Thêm vào sổ từ</button>}
+            {res.in_notebook || added ? <span className="ok">{res.added_to_review ? "✓ Đã tự thêm vào danh sách ôn tập" : "✓ Có trong danh sách ôn tập"}</span> : <button onClick={add}>+ Thêm vào ôn tập</button>}
           </div>
           {res.saved_to && (
             <p className="notice" style={{ background: "var(--primary-soft)" }}>

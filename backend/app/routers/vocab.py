@@ -74,6 +74,25 @@ def remember_lookup(session: Session, term: str, info: Optional[dict], word: Opt
     return word
 
 
+def ensure_card(session: Session, word: Word) -> bool:
+    """Đưa từ vào danh sách ôn tập (tạo thẻ) nếu chưa có. Trả True nếu vừa tạo."""
+    if session.exec(select(Card).where(Card.word_id == word.id)).first():
+        return False
+    session.add(Card(word_id=word.id))
+    session.commit()
+    return True
+
+
+def backfill_lookup_cards(session: Session) -> int:
+    """Các từ đã tra trước đây nhưng chưa có thẻ ôn: tạo thẻ cho chúng."""
+    has = {c.word_id for c in session.exec(select(Card)).all()}
+    words = [w for w in session.exec(select(Word).where(Word.source == "lookup")).all() if w.id not in has]
+    for w in words:
+        session.add(Card(word_id=w.id))
+    session.commit()
+    return len(words)
+
+
 @router.get("/dictionary/lookup")
 def lookup(q: str, context: str = "", lang: str = "auto", session: Session = Depends(get_session)):
     """lang: auto (tự nhận diện) | en (Anh→Việt) | vi (Việt→Anh). Từ tiếng Anh tra xong được lưu vào kho."""
@@ -104,6 +123,7 @@ def lookup(q: str, context: str = "", lang: str = "auto", session: Session = Dep
             {"key": "my-other", "name": MY_SUBS["my-other"], "category_name": MY_CAT["name"]} if word.category == "other"
             else {"key": "my-lookups", "name": MY_SUBS["my-lookups"], "category_name": MY_CAT["name"]})
         result["lookup_count"] = word.lookup_count
+        result["added_to_review"] = ensure_card(session, word)
     card = session.exec(select(Card).where(Card.word_id == result.get("id"))).first() if result.get("id") else None
     result["in_notebook"] = bool(card)
     return result
@@ -122,6 +142,17 @@ def lookup_vi(query: str, context: str, session: Session) -> dict:
         data = dictionary.vi_to_en(query, context)
     except llm.LLMError as e:
         raise HTTPException(502, str(e)) from e
+    saved = None
+    first = next((c for c in data.get("candidates", []) if _TERM_OK.match(str(c.get("term", "")).strip())), None)
+    if first:
+        term = first["term"].strip()
+        existing = session.exec(select(Word).where(func.lower(Word.term) == term.lower())).first()
+        info = None if existing and existing.enriched else {
+            "meaning_vi": query, "part_of_speech": first.get("part_of_speech"), "ipa": first.get("ipa"), "stress": first.get("stress"),
+            "usage_vi": first.get("nuance_vi"), "example": first.get("example"), "example_vi": first.get("example_vi")}
+        w = remember_lookup(session, existing.term if existing else term, info, existing)
+        ensure_card(session, w)
+        saved = {"id": w.id, "term": w.term}
     words = {w.term.lower(): w for w in session.exec(select(Word)).all()}
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
     q = query.lower()
@@ -131,7 +162,7 @@ def lookup_vi(query: str, context: str, session: Session) -> dict:
         w = words.get(str(c.get("term", "")).lower())
         cands.append({**c, "id": w.id if w else None, "in_notebook": bool(w and w.id in in_nb)})
     return {
-        "mode": "vi", "query": query, "candidates": cands, "note_vi": data.get("note_vi"),
+        "mode": "vi", "query": query, "candidates": cands, "note_vi": data.get("note_vi"), "saved": saved,
         "from_vocab": [{"id": w.id, "term": w.term, "meaning_vi": w.meaning_vi, "subtopic": w.subtopic,
                         "in_notebook": w.id in in_nb} for w in in_kho if w.term.lower() not in {c["term"].lower() for c in cands}],
     }

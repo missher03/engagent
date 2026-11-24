@@ -102,13 +102,23 @@ def test_lookup_is_remembered_and_classified(client, monkeypatch):
     # Tra lại: dùng bản đã lưu, tăng số lần tra
     r3 = client.get("/api/dictionary/lookup", params={"q": "Blorp Toggle", "lang": "en"}).json()
     assert r3["id"] == r["id"] and r3["lookup_count"] == 2 and r3["meaning_vi"] == "cờ tính năng"
+    # Mọi từ tra đều vào danh sách ôn tập (chỉ tạo thẻ một lần)
+    assert r["added_to_review"] and r["in_notebook"] and r3["added_to_review"] is False
+    nb = {w["term"] for w in client.get("/api/notebook").json()}
+    assert {"blorp toggle", "snarf release"} <= nb
+    # Tra Việt -> Anh: gợi ý đầu tiên được lưu và đưa vào ôn tập
+    monkeypatch.setattr(dictionary, "vi_to_en", lambda q, context="": {"candidates": [
+        {"term": "glimbo rate", "part_of_speech": "noun", "ipa": "/x/", "nuance_vi": "", "example": "The glimbo rate rose.", "example_vi": ""}]})
+    v = client.get("/api/dictionary/lookup", params={"q": "tỷ lệ glimbo", "lang": "vi"}).json()
+    assert v["saved"]["term"] == "glimbo rate" and v["candidates"][0]["in_notebook"]
+    assert "glimbo rate" in {w["term"] for w in client.get("/api/notebook").json()}
 
     hist = client.get("/api/dictionary/history").json()
-    assert hist[0]["term"] == "blorp toggle"
+    assert [h["term"] for h in hist[:2]] == ["glimbo rate", "blorp toggle"]
     cats = client.get("/api/categories").json()
     assert cats["categories"][0]["key"] == "mine" and cats["mine"] >= 2
     mine = client.get("/api/words", params={"subtopic": "my-lookups"}).json()
-    assert [w["term"] for w in mine][:2] == ["blorp toggle", "snarf release"]
+    assert {"blorp toggle", "snarf release", "glimbo rate"} <= {w["term"] for w in mine}
 
 
 def test_speaking_coach(client, monkeypatch):

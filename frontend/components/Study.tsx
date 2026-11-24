@@ -41,7 +41,7 @@ function useLookup() {
       {pop.err ? <p className="error small">{pop.err}</p> : !pop.data ? <p className="muted small">Đang tra…</p> : <>
         <div className="muted small">{pop.data.ipa} {pop.data.part_of_speech}</div>
         <p style={{ margin: "6px 0" }}>{pop.data.meaning_vi}</p>
-        {pop.data.saved_to && <div className="ok small">Đã lưu vào kho: {pop.data.saved_to.name}</div>}
+        {pop.data.saved_to && <div className="ok small">Đã lưu vào kho ({pop.data.saved_to.name}) và danh sách ôn tập</div>}
       </>}
     </div>
   );
@@ -67,7 +67,7 @@ function Reading({ les, lookup }: { les: Lesson; lookup: ReturnType<typeof useLo
   const tr = (text: string) => post("/api/study/translate", { text }).then((r: any) => r.vi as string);
   return (
     <div className="study-read">
-      <p className="muted small">{les.words} từ · khoảng {Math.max(1, Math.round(les.words / 180))} phút đọc · bấm vào một từ để tra nghĩa và lưu vào kho từ</p>
+      <p className="muted small">{les.words} từ · khoảng {Math.max(1, Math.round(les.words / 180))} phút đọc · bấm vào một từ để tra nghĩa, từ đó tự vào danh sách ôn tập</p>
       {les.content.mock && <p className="muted small">Đây là nội dung mẫu. Cần key LLM để AI viết bài thật.</p>}
       {les.content.sections.map((s, i) => (
         <section key={i}>
