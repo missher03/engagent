@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 
 const SKILLS: [string, string, string, string, string][] = [
   ["/words", "Kho từ vựng", "Hơn 2.000 thuật ngữ IT, AI, dữ liệu chia theo chủ đề nhỏ.", "layers", "var(--c1)"],
-  ["/pronunciation", "Phát âm", "Đọc to, được chấm từng từ và từng âm.", "mic", "var(--c4)"],
+  ["/pronunciation", "Phát âm", "Bảng IPA 44 âm, cặp âm dễ nhầm, phiên âm và trọng âm.", "mic", "var(--c4)"],
   ["/lessons", "Nghe & đọc", "Bài đọc, hội thoại sinh từ chính các từ bạn đang học.", "headphones", "var(--c2)"],
   ["/writing", "Viết", "Báo cáo ngắn và tài liệu thiết kế kiểu IELTS, chấm band 4.0-9.0.", "pen", "var(--c3)"],
   ["/speaking", "Nói", "Trò chuyện, thi theo đề, hỏi đáp về tài liệu của bạn.", "chat", "var(--c5)"],
