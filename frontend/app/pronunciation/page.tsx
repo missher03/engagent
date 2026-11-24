@@ -327,7 +327,7 @@ export default function Pronunciation() {
   const [sound, setSound] = useState("iː");
   const [pair, setPair] = useState(PAIRS[0].key);
   useEffect(() => {
-    setProg(loadProgress());
+    loadProgress().then(setProg);
     try { const t = localStorage.getItem("ipa-tab") as Tab | null; if (t && TABS.some((x) => x[0] === t)) setTab(t); } catch { /* ignore */ }
   }, []);
   function choose(t: Tab) { window.speechSynthesis?.cancel(); setTab(t); try { localStorage.setItem("ipa-tab", t); } catch { /* ignore */ } }

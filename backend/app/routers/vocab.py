@@ -10,8 +10,14 @@ from pydantic import BaseModel
 from sqlmodel import Session, func, select
 
 from ..db import get_session
-from ..models import Card, ReviewLog, Word, now
+from ..models import Card, ReviewLog, Word, WordLookup, now
 from ..services import dictionary, llm, prompts, srs, vocab_data
+
+def _get_profile(session):
+    from .learn import get_profile
+
+    return get_profile(session)
+
 
 router = APIRouter(prefix="/api", tags=["vocab"])
 
@@ -71,7 +77,18 @@ def remember_lookup(session: Session, term: str, info: Optional[dict], word: Opt
     session.add(word)
     session.commit()
     session.refresh(word)
+    mine = session.exec(select(WordLookup).where(WordLookup.word_id == word.id)).first() or WordLookup(word_id=word.id)
+    mine.count = (mine.count or 0) + 1
+    mine.last_at = now()
+    session.add(mine)
+    session.commit()
+    session.refresh(word)
     return word
+
+
+def my_lookups(session: Session) -> dict[int, WordLookup]:
+    """Từ người đang đăng nhập đã tra: word_id -> WordLookup."""
+    return {x.word_id: x for x in session.exec(select(WordLookup)).all()}
 
 
 def ensure_card(session: Session, word: Word) -> bool:
@@ -84,13 +101,24 @@ def ensure_card(session: Session, word: Word) -> bool:
 
 
 def backfill_lookup_cards(session: Session) -> int:
-    """Các từ đã tra trước đây nhưng chưa có thẻ ôn: tạo thẻ cho chúng."""
-    has = {c.word_id for c in session.exec(select(Card)).all()}
-    words = [w for w in session.exec(select(Word).where(Word.source == "lookup")).all() if w.id not in has]
-    for w in words:
-        session.add(Card(word_id=w.id))
+    """Chạy lúc khởi động (không có người đăng nhập, nên thấy mọi dòng).
+    1) Từ đã tra theo cách cũ (cột trên Word) mà chưa có bản ghi WordLookup: tạo bản ghi chưa có chủ.
+    2) Mỗi từ ai đó đã tra mà người đó chưa có thẻ ôn: tạo thẻ cho đúng người đó."""
+    looks = session.exec(select(WordLookup)).all()
+    if not looks:
+        for w in session.exec(select(Word).where(Word.looked_up_at.is_not(None))).all():
+            session.add(WordLookup(word_id=w.id, count=w.lookup_count or 1, last_at=w.looked_up_at))
+        session.commit()
+        looks = session.exec(select(WordLookup)).all()
+    has = {(c.user_id, c.word_id) for c in session.exec(select(Card)).all()}
+    n = 0
+    for lk in looks:
+        if (lk.user_id, lk.word_id) not in has:
+            has.add((lk.user_id, lk.word_id))
+            session.add(Card(word_id=lk.word_id, user_id=lk.user_id))
+            n += 1
     session.commit()
-    return len(words)
+    return n
 
 
 @router.get("/dictionary/lookup")
@@ -122,7 +150,7 @@ def lookup(q: str, context: str = "", lang: str = "auto", session: Session = Dep
         result["saved_to"] = sub or (
             {"key": "my-other", "name": MY_SUBS["my-other"], "category_name": MY_CAT["name"]} if word.category == "other"
             else {"key": "my-lookups", "name": MY_SUBS["my-lookups"], "category_name": MY_CAT["name"]})
-        result["lookup_count"] = word.lookup_count
+        result["lookup_count"] = my_lookups(session)[word.id].count
         result["added_to_review"] = ensure_card(session, word)
     card = session.exec(select(Card).where(Card.word_id == result.get("id"))).first() if result.get("id") else None
     result["in_notebook"] = bool(card)
@@ -132,8 +160,10 @@ def lookup(q: str, context: str = "", lang: str = "auto", session: Session = Dep
 @router.get("/dictionary/history")
 def lookup_history(limit: int = 20, session: Session = Depends(get_session)):
     """Các từ đã tra gần đây (mới nhất trước)."""
-    ws = session.exec(select(Word).where(Word.looked_up_at.is_not(None)).order_by(Word.looked_up_at.desc()).limit(limit)).all()
-    return [{"id": w.id, "term": w.term, "meaning_vi": w.meaning_vi, "subtopic": w.subtopic, "lookup_count": w.lookup_count} for w in ws]
+    mine = sorted(my_lookups(session).values(), key=lambda x: x.last_at, reverse=True)[:limit]
+    words = {w.id: w for w in session.exec(select(Word).where(Word.id.in_([x.word_id for x in mine]))).all()}
+    return [{"id": w.id, "term": w.term, "meaning_vi": w.meaning_vi, "subtopic": w.subtopic, "lookup_count": x.count}
+            for x in mine if (w := words.get(x.word_id))]
 
 
 def lookup_vi(query: str, context: str, session: Session) -> dict:
@@ -204,12 +234,10 @@ def _taxonomy():
 def words_in_subtopic(session: Session, key: str) -> list[Word]:
     """Từ thuộc một chủ đề nhỏ: từ có sẵn theo thứ tự file, rồi đến từ bạn tự tra. Hỗ trợ cả chủ đề ảo my-*."""
     allw = session.exec(select(Word)).all()
-    if key == "my-lookups":
-        ws = [w for w in allw if w.looked_up_at]
-        return sorted(ws, key=lambda w: w.looked_up_at, reverse=True)
-    if key == "my-other":
-        ws = [w for w in allw if w.source == "lookup" and w.category == "other"]
-        return sorted(ws, key=lambda w: w.looked_up_at or now(), reverse=True)
+    if key in MY_SUBS:
+        mine = my_lookups(session)
+        ws = [w for w in allw if w.id in mine and (key == "my-lookups" or (w.source == "lookup" and w.category == "other"))]
+        return sorted(ws, key=lambda w: mine[w.id].last_at, reverse=True)
     order = {t.lower(): i for i, t in enumerate(_subtopic_terms(key))}
     return sorted((w for w in allw if key in (w.subtopics or [])), key=lambda w: (order.get(w.term.lower(), 9999), w.term.lower()))
 
@@ -227,6 +255,7 @@ def categories(session: Session = Depends(get_session)):
     """Cây lĩnh vực > chủ đề nhỏ, kèm số từ, số từ đã có nội dung, số từ trong sổ. Gồm cả từ bạn tự tra."""
     allw = session.exec(select(Word)).all()
     in_nb = {c.word_id for c in session.exec(select(Card)).all()}
+    mine = my_lookups(session)
     by_sub: dict[str, list[Word]] = {}
     for w in allw:
         for k in w.subtopics or []:
@@ -237,7 +266,7 @@ def categories(session: Session = Depends(get_session)):
             "key": key, "name": name, "count": len(ws),
             "ready": sum(1 for w in ws if w.enriched),
             "in_notebook": sum(1 for w in ws if w.id in in_nb),
-            "mine": sum(1 for w in ws if w.source == "lookup"),
+            "mine": sum(1 for w in ws if w.id in mine),
             "preview": [w.term for w in ws[:6]],
         }
 
@@ -249,9 +278,9 @@ def categories(session: Session = Depends(get_session)):
             ws = sorted(by_sub.get(st["key"], []), key=lambda w: (order.get(w.term.lower(), 9999), w.term.lower()))
             subs.append(summary(st["key"], st["name"], ws))
         out.append({"key": c["key"], "name": c["name"], "subtopics": subs, "count": sum(x["count"] for x in subs)})
-    looked = [w for w in allw if w.looked_up_at]
+    looked = [w for w in allw if w.id in mine]
     if looked:
-        looked.sort(key=lambda w: w.looked_up_at, reverse=True)
+        looked.sort(key=lambda w: mine[w.id].last_at, reverse=True)
         subs = [summary("my-lookups", MY_SUBS["my-lookups"], looked)]
         other = [w for w in looked if w.source == "lookup" and w.category == "other"]
         if other:
@@ -331,7 +360,7 @@ def check_sentence(word_id: int, body: SentenceIn, session: Session = Depends(ge
         raise HTTPException(404, "Không có từ này")
     if len(body.sentence.split()) < 3:
         raise HTTPException(400, "Câu quá ngắn")
-    profile = session.get(Profile, 1)
+    profile = _get_profile(session)
     used = w.term.lower().split()[0][:5] in body.sentence.lower()
     try:
         result = llm.complete_json(

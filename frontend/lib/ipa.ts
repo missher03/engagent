@@ -1,3 +1,4 @@
+import { api, post } from "./api";
 /** Dữ liệu luyện phát âm theo IPA (giọng Anh-Anh chuẩn, phiên âm kiểu từ điển Oxford/Cambridge). */
 
 export type Sound = {
@@ -141,19 +142,26 @@ export const WORDS: { word: string; ipa: string }[] = (() => {
   return out;
 })();
 
-// ---------- Tiến độ (lưu trong trình duyệt) ----------
+// ---------- Tiến độ (lưu theo tài khoản trên máy chủ) ----------
 export type Progress = Record<string, [number, number]>; // âm -> [đúng, tổng]
-const KEY = "ipa-progress";
+const OLD_KEY = "ipa-progress"; // bản cũ lưu trong trình duyệt, gộp lên tài khoản một lần
+let cache: Progress = {};
 
-export function loadProgress(): Progress {
-  try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; }
+export async function loadProgress(): Promise<Progress> {
+  let old: Progress | null = null;
+  try { old = JSON.parse(localStorage.getItem(OLD_KEY) || "null"); } catch { /* ignore */ }
+  try {
+    cache = old && Object.keys(old).length ? await post<Progress>("/api/me/ipa", { merge: old }) : await api<Progress>("/api/me/ipa");
+    if (old) localStorage.removeItem(OLD_KEY);
+  } catch { /* giữ cache */ }
+  return cache;
 }
+/** Ghi ngay vào bộ nhớ để giao diện cập nhật, rồi gửi lên tài khoản. */
 export function record(sound: string, ok: boolean): Progress {
-  const p = loadProgress();
-  const [r, t] = p[sound] || [0, 0];
-  p[sound] = [r + (ok ? 1 : 0), t + 1];
-  try { localStorage.setItem(KEY, JSON.stringify(p)); } catch { /* ignore */ }
-  return p;
+  const [r, t] = cache[sound] || [0, 0];
+  cache = { ...cache, [sound]: [r + (ok ? 1 : 0), t + 1] };
+  post("/api/me/ipa", { sound, ok }).catch(() => { /* ignore */ });
+  return cache;
 }
 export const rate = (p: Progress, s: string) => (p[s] && p[s][1] ? p[s][0] / p[s][1] : null);
 export function weakest(p: Progress, n = 5) {

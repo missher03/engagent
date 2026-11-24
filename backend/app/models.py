@@ -1,4 +1,4 @@
-"""Bảng dữ liệu. MVP một người dùng nên chưa có bảng user; thêm user_id khi làm đăng nhập."""
+"""Bảng dữ liệu. Bảng có cột user_id là dữ liệu riêng của từng người (tự lọc theo người đang đăng nhập, xem scoping.py)."""
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -43,7 +43,8 @@ class Card(SQLModel, table=True):
     """Thẻ ôn tập của một từ đã được thêm vào sổ từ."""
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    word_id: int = Field(foreign_key="word.id", index=True, unique=True)
+    word_id: int = Field(foreign_key="word.id", index=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     level: int = 1  # 1 nhận biết, 2 nhớ lại, 3 dùng đúng, 4 sản xuất
     step: int = 0  # vị trí trong lịch ôn
     due: datetime = Field(default_factory=now, index=True)
@@ -55,6 +56,7 @@ class Card(SQLModel, table=True):
 
 class ReviewLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     card_id: int = Field(foreign_key="card.id", index=True)
     correct: bool
     level_before: int
@@ -65,6 +67,7 @@ class Lesson(SQLModel, table=True):
     """Bài đọc/nghe do LLM sinh, cache theo khóa (topic, level, format, target_words)."""
 
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     cache_key: str = Field(index=True)
     title: str
     format: str
@@ -82,6 +85,7 @@ class Attempt(SQLModel, table=True):
     """Một lần nộp bài nói/viết/phát âm/hỏi đáp, lưu điểm để theo dõi tiến bộ."""
 
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     skill: str = Field(index=True)  # pronunciation | writing | speaking | examiner
     task: str = ""
     input_text: str = ""
@@ -93,18 +97,21 @@ class Attempt(SQLModel, table=True):
 class Profile(SQLModel, table=True):
     """Hồ sơ người học: trình độ, lỗi hay gặp; dự án/đề tài riêng là tùy chọn."""
 
-    id: Optional[int] = Field(default=1, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     level: str = "B1"
     thesis_title: str = ""  # tùy chọn: tên dự án/đề tài riêng
     thesis_summary: str = ""
     defense_date: Optional[str] = None
     common_errors: list = Field(default_factory=list, sa_column=Column(JSON))
+    ipa_progress: dict = Field(default_factory=dict, sa_column=Column(JSON))  # âm -> [đúng, tổng]
 
 
 class ExamItem(SQLModel, table=True):
     """Đề thi nói do AI sinh (đề làm sẵn nằm trong data/speaking_exams.json)."""
 
     id: str = Field(primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     type: str = Field(index=True)
     data: dict = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=now)
@@ -114,6 +121,7 @@ class Course(SQLModel, table=True):
     """Khóa học nghe/đọc theo chủ đề người học tự nhập (vd Kafka). Các bài nằm trong cột lessons (JSON), tạo dần."""
 
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
     topic: str
     title: str = ""
     level: str = "B2"
@@ -122,3 +130,26 @@ class Course(SQLModel, table=True):
     sources: list = Field(default_factory=list, sa_column=Column(JSON))   # [{title, url, text}]
     lessons: list = Field(default_factory=list, sa_column=Column(JSON))   # [{title, focus, key_points, content, listening, quiz, done, score}]
     created_at: datetime = Field(default_factory=now)
+
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True)
+    password_hash: str
+    created_at: datetime = Field(default_factory=now)
+
+
+class AuthToken(SQLModel, table=True):
+    token: str = Field(primary_key=True)
+    user_id: int = Field(index=True)
+    expires_at: datetime
+
+
+class WordLookup(SQLModel, table=True):
+    """Từ một người đã tra: số lần tra và lần tra gần nhất (riêng từng người)."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, index=True)
+    word_id: int = Field(foreign_key="word.id", index=True)
+    count: int = 0
+    last_at: datetime = Field(default_factory=now)

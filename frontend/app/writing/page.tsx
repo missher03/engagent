@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, post } from "@/lib/api";
+import { currentUser } from "@/lib/auth";
 import Material, { Block } from "@/components/Material";
 import Icon from "@/components/Icon";
 
@@ -21,10 +22,10 @@ const MODE_INFO: Record<Mode, { name: string; sub: string; desc: string; icon: s
 };
 const CRIT: [string, string][] = [["task", "Task"], ["coherence", "Coherence"], ["lexical", "Lexical"], ["grammar", "Grammar"], ["technical", "Kỹ thuật"]];
 const countWords = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
-const draftKey = (id: string) => `write-draft-${id}`;
+const draftKey = (id: string) => `write-draft-${currentUser()?.username || ""}-${id}`;
 
 function loadDraft(t: Task): { text: string; secs: Record<string, string> } {
-  try { const d = JSON.parse(localStorage.getItem(draftKey(t.id)) || "null"); if (d) return { text: d.text || "", secs: d.secs || {} }; } catch { /* ignore */ }
+  try { const d = JSON.parse(localStorage.getItem(draftKey(t.id)) || (currentUser()?.id === 1 ? localStorage.getItem(`write-draft-${t.id}`) : null) || "null"); if (d) return { text: d.text || "", secs: d.secs || {} }; } catch { /* ignore */ }
   return { text: "", secs: {} };
 }
 

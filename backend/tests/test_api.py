@@ -227,3 +227,43 @@ def test_study_course_flow(client):
     assert any(x["id"] == c["id"] for x in client.get("/api/study/courses").json())
     assert client.delete(f"/api/study/courses/{c['id']}").json()["ok"]
     assert client.get(f"/api/study/courses/{c['id']}").status_code == 404
+
+
+def test_auth_and_isolation(client):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    anon = TestClient(app)
+    assert anon.get("/api/health").status_code == 200
+    assert anon.get("/api/profile").status_code == 401
+    assert anon.post("/api/auth/login", json={"username": "tester", "password": "wrong"}).status_code == 401
+    assert anon.post("/api/auth/register", json={"username": "tester", "password": "secret123"}).status_code == 409
+    assert anon.post("/api/auth/register", json={"username": "a", "password": "secret123"}).status_code == 400
+
+    # Người A (tester) tra từ, đổi trình độ, luyện IPA
+    client.get("/api/dictionary/lookup", params={"q": "isolationword"})
+    client.put("/api/profile", json={"level": "C1"})
+    client.post("/api/me/ipa", json={"sound": "θ", "ok": True})
+    a_cards = {c["id"] for c in client.get("/api/notebook").json()}
+    assert client.get("/api/auth/me").json()["username"] == "tester"
+
+    # Người B: dữ liệu trống, không thấy của A
+    r = anon.post("/api/auth/register", json={"username": "binh", "password": "secret456"})
+    assert r.status_code == 200 and r.json()["claimed_old_data"] is False
+    b = TestClient(app, headers={"Authorization": f"Bearer {r.json()['token']}"})
+    assert b.get("/api/profile").json()["level"] == "B1"
+    assert b.get("/api/me/ipa").json() == {}
+    assert all(h["term"] != "isolationword" for h in b.get("/api/dictionary/history").json())
+    assert client.get("/api/dictionary/history").json()[0]["term"] == "isolationword"
+    assert a_cards and not ({c["id"] for c in b.get("/api/notebook").json()} & a_cards)
+    # B tra cùng từ: có thẻ riêng, A vẫn giữ thẻ của mình
+    rb = b.get("/api/dictionary/lookup", params={"q": "isolationword"}).json()
+    assert rb["added_to_review"] is True and rb["lookup_count"] == 1
+    assert client.get("/api/me/ipa").json() == {"θ": [1, 1]}
+    assert client.get("/api/profile").json()["level"] == "C1"
+
+    # Đăng xuất làm token hết hiệu lực
+    assert b.post("/api/auth/logout").status_code == 200
+    assert b.get("/api/profile").status_code == 401
+    client.put("/api/profile", json={"level": "B1"})

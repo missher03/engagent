@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, post } from "@/lib/api";
+import { clearSession, currentUser } from "@/lib/auth";
 import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 
@@ -15,7 +16,17 @@ const GROUPS: { title: string; links: [string, string, string][] }[] = [
 export default function Nav() {
   const path = usePathname() || "/";
   const [level, setLevel] = useState("");
-  useEffect(() => { api("/api/profile").then((p) => setLevel(p.level || "B1")).catch(() => {}); }, []);
+  const [user, setUser] = useState("");
+  useEffect(() => {
+    setUser(currentUser()?.username || "");
+    api("/api/auth/me").then((u) => setUser(u.username)).catch(() => {});
+    api("/api/profile").then((p) => setLevel(p.level || "B1")).catch(() => {});
+  }, []);
+  async function logout() {
+    try { await post("/api/auth/logout", {}); } catch { /* ignore */ }
+    clearSession();
+    window.location.href = "/login";
+  }
   async function choose(l: string) {
     setLevel(l);
     try { await api("/api/profile", { method: "PUT", body: JSON.stringify({ level: l }) }); window.dispatchEvent(new CustomEvent("level-change", { detail: l })); } catch { /* ignore */ }
@@ -42,6 +53,11 @@ export default function Nav() {
       {level && <div className="level-switch" title="Trình độ dùng cho bài AI tạo, chấm điểm và trò chuyện">
         <div className="navtitle">Trình độ</div>
         <div className="seg">{["B1", "B2", "C1"].map((l) => <button key={l} className={level === l ? "on" : ""} onClick={() => choose(l)}>{l}</button>)}</div>
+      </div>}
+      {user && <div className="userbox">
+        <span className="avatar">{user[0].toUpperCase()}</span>
+        <span className="uname" title={user}>{user}</span>
+        <button className="ghost small" onClick={logout} title="Đăng xuất">Đăng xuất</button>
       </div>}
     </aside>
   );

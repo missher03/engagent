@@ -11,6 +11,12 @@ from ..db import get_session
 from ..models import Profile
 from ..services import llm, prompts
 
+def _get_profile(session):
+    from .learn import get_profile
+
+    return get_profile(session)
+
+
 router = APIRouter(prefix="/api/coach", tags=["coach"])
 
 
@@ -50,7 +56,7 @@ def coach_chat(body: CoachIn, session: Session = Depends(get_session)):
         msgs = msgs[1:]
     if not llm.get_settings().llm_enabled:
         return _mock(msgs[-1].content)
-    p = session.get(Profile, 1)
+    p = _get_profile(session)
     level = body.level or (p.level if p else "B1")
     convo = [{"role": "assistant" if m.role == "coach" else "user", "content": m.content} for m in msgs]
     try:
@@ -85,7 +91,7 @@ class TalkIn(BaseModel):
 
 
 def _level(session: Session, level: Optional[str]) -> str:
-    p = session.get(Profile, 1)
+    p = _get_profile(session)
     return level or (p.level if p else "B1")
 
 

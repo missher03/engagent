@@ -19,4 +19,6 @@ def client(tmp_path_factory):
     from app.main import app
 
     with TestClient(app) as c:
+        r = c.post("/api/auth/register", json={"username": "tester", "password": "secret123"})
+        c.headers["Authorization"] = f"Bearer {r.json()['token']}"
         yield c

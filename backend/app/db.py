@@ -1,5 +1,7 @@
 from sqlmodel import Session, SQLModel, create_engine
 
+from . import scoping  # noqa: F401  (lọc dữ liệu theo người dùng)
+
 from .config import get_settings
 
 _settings = get_settings()
@@ -29,6 +31,12 @@ def _add_missing_columns() -> None:
                 if col.name not in existing:
                     ddl = col.type.compile(dialect=engine.dialect)
                     conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {ddl}'))
+        # Trước đây mỗi từ chỉ có một thẻ (unique); giờ mỗi người một thẻ riêng.
+        if insp.has_table("card"):
+            for ix in insp.get_indexes("card"):
+                if ix["name"] == "ix_card_word_id" and ix.get("unique"):
+                    conn.execute(text("DROP INDEX ix_card_word_id"))
+                    conn.execute(text("CREATE INDEX ix_card_word_id ON card (word_id)"))
 
 
 def get_session():

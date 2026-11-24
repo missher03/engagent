@@ -18,6 +18,12 @@ from ..db import get_session
 from ..models import Attempt, ExamItem, Profile
 from ..services import llm, prompts
 
+def _get_profile(session):
+    from .learn import get_profile
+
+    return get_profile(session)
+
+
 router = APIRouter(prefix="/api", tags=["exam"])
 
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -35,7 +41,7 @@ TYPES = {
 
 
 def _level(session: Session) -> str:
-    p = session.get(Profile, 1)
+    p = _get_profile(session)
     return p.level if p else "B1"
 
 

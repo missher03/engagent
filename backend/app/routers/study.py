@@ -12,12 +12,18 @@ from ..db import get_session
 from ..models import Attempt, Course, Profile
 from ..services import llm, prompts, research
 
+def _get_profile(session):
+    from .learn import get_profile
+
+    return get_profile(session)
+
+
 router = APIRouter(prefix="/api/study", tags=["study"])
 LEVELS = ("B1", "B2", "C1")
 
 
 def _profile_level(session: Session) -> str:
-    p = session.get(Profile, 1)
+    p = _get_profile(session)
     return p.level if p and p.level in LEVELS else "B1"
 
 

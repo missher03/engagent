@@ -1,13 +1,21 @@
+import { clearSession, getToken, goLogin } from "./auth";
+
 // Trên Windows "localhost" thường thử IPv6 (::1) trước rồi mới về 127.0.0.1, mỗi request có thể chậm thêm
 // vài trăm ms đến ~2 giây. Uvicorn chỉ nghe 127.0.0.1 nên đổi thẳng sang địa chỉ này.
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace("//localhost:", "//127.0.0.1:");
 
 export async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   const isForm = init?.body instanceof FormData;
+  const token = getToken();
+  const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: isForm ? init?.headers : { "Content-Type": "application/json", ...(init?.headers || {}) },
+    headers: isForm ? { ...auth, ...(init?.headers || {}) } : { "Content-Type": "application/json", ...auth, ...(init?.headers || {}) },
   });
+  if (res.status === 401 && !path.startsWith("/api/auth/")) {
+    clearSession();
+    goLogin();
+  }
   if (!res.ok) {
     let msg = `${res.status}`;
     try {

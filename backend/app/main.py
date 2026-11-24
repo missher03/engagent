@@ -5,13 +5,15 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
 
 from .config import get_settings
 from .db import engine, init_db
-from .models import Word
-from .routers import coach, exam, learn, speech, study, vocab, writing
+from .models import User, Word
+from .scoping import current_user_id
+from .routers import auth, coach, exam, learn, speech, study, vocab, writing
 from .services.tts import audio_dir
 from .services.vocab_data import sync_words
 
@@ -38,17 +40,51 @@ async def lifespan(app: FastAPI):
         from .routers.vocab import backfill_lookup_cards
 
         logging.getLogger("engagent").info("Thẻ ôn mới cho từ đã tra: %s", backfill_lookup_cards(s))
+        first = s.exec(select(User).order_by(User.id)).first()
+        if first:
+            auth.claim_orphans(s, first.id)
     yield
+
+
+class AuthMiddleware:
+    """Đọc token (Authorization: Bearer ...), đặt người dùng hiện tại cho cả request.
+    Mọi /api/* trừ /api/auth/* và /api/health cần đăng nhập."""
+
+    OPEN = ("/api/auth/", "/api/health")
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        headers = dict(scope.get("headers") or [])
+        token = headers.get(b"authorization", b"").decode().removeprefix("Bearer ").strip()
+        uid = None
+        if token:
+            with Session(engine) as s:
+                uid = auth.user_for_token(s, token)
+        path = scope.get("path", "")
+        if uid is None and path.startswith("/api/") and not path.startswith(self.OPEN) and scope.get("method") != "OPTIONS":
+            await JSONResponse({"detail": "Chưa đăng nhập"}, status_code=401)(scope, receive, send)
+            return
+        reset = current_user_id.set(uid)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            current_user_id.reset(reset)
 
 
 settings = get_settings()
 app = FastAPI(title="EngAgent API", version="0.1.0", lifespan=lifespan)
+app.add_middleware(AuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(auth.router)
 app.include_router(vocab.router)
 app.include_router(speech.router)
 app.include_router(learn.router)

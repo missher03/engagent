@@ -22,9 +22,9 @@ WRITING_TASKS = json.loads((DATA / "writing_tasks.json").read_text(encoding="utf
 
 
 def get_profile(session: Session) -> Profile:
-    p = session.get(Profile, 1)
+    p = session.exec(select(Profile).order_by(Profile.id)).first()
     if not p:
-        p = Profile(id=1)
+        p = Profile()
         session.add(p)
         session.commit()
         session.refresh(p)
@@ -69,6 +69,35 @@ def update_profile(body: ProfileIn, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(p)
     return p
+
+
+class IpaIn(BaseModel):
+    sound: Optional[str] = None
+    ok: Optional[bool] = None
+    merge: Optional[dict] = None  # tiến độ cũ lưu trên trình duyệt, gộp vào một lần
+
+
+@router.get("/me/ipa")
+def ipa_progress(session: Session = Depends(get_session)):
+    return get_profile(session).ipa_progress or {}
+
+
+@router.post("/me/ipa")
+def ipa_record(body: IpaIn, session: Session = Depends(get_session)):
+    """Ghi một lần luyện âm (đúng/sai) vào tiến độ IPA của người đang đăng nhập."""
+    p = get_profile(session)
+    prog = {k: list(v) for k, v in (p.ipa_progress or {}).items()}
+    for k, v in (body.merge or {}).items():
+        if isinstance(v, list) and len(v) == 2:
+            a, b = prog.get(k, [0, 0])
+            prog[k] = [a + int(v[0]), b + int(v[1])]
+    if body.sound:
+        a, b = prog.get(body.sound, [0, 0])
+        prog[body.sound] = [a + (1 if body.ok else 0), b + 1]
+    p.ipa_progress = prog
+    session.add(p)
+    session.commit()
+    return prog
 
 
 # ---------- Bài đọc / nghe ----------
