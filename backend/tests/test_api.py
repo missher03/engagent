@@ -267,3 +267,16 @@ def test_auth_and_isolation(client):
     assert b.post("/api/auth/logout").status_code == 200
     assert b.get("/api/profile").status_code == 401
     client.put("/api/profile", json={"level": "B1"})
+
+
+def test_signup_code(client):
+    from app.config import get_settings
+
+    s = get_settings()
+    s.signup_code = "moi-2026"
+    try:
+        assert client.get("/api/auth/options").json() == {"signup_code_required": True}
+        assert client.post("/api/auth/register", json={"username": "khach", "password": "secret123"}).status_code == 403
+        assert client.post("/api/auth/register", json={"username": "khach", "password": "secret123", "code": "moi-2026"}).status_code == 200
+    finally:
+        s.signup_code = ""

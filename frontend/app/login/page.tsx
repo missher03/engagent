@@ -1,7 +1,7 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { post } from "@/lib/api";
+import { api, post } from "@/lib/api";
 import { saveSession, User } from "@/lib/auth";
 
 function LoginForm() {
@@ -10,6 +10,9 @@ function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
+  const [code, setCode] = useState("");
+  const [needCode, setNeedCode] = useState(false);
+  useEffect(() => { api("/api/auth/options").then((o) => setNeedCode(!!o.signup_code_required)).catch(() => {}); }, []);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -19,7 +22,7 @@ function LoginForm() {
     if (mode === "register" && password !== password2) return setErr("Hai mật khẩu chưa khớp");
     setBusy(true);
     try {
-      const r = await post<{ token: string; user: User }>(`/api/auth/${mode}`, { username, password });
+      const r = await post<{ token: string; user: User }>(`/api/auth/${mode}`, { username, password, code });
       saveSession(r.token, r.user);
       const next = params.get("next");
       window.location.href = next && next.startsWith("/") && !next.startsWith("/login") ? next : "/";
@@ -45,6 +48,9 @@ function LoginForm() {
         </label>
         {mode === "register" && <label>Nhập lại mật khẩu
           <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} autoComplete="new-password" required />
+        </label>}
+        {mode === "register" && needCode && <label>Mã mời
+          <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" required />
         </label>}
         {err && <div className="login-err">{err}</div>}
         <button className="primary" disabled={busy}>{busy ? "Đang xử lý..." : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}</button>

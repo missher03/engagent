@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     storage_dir: str = "./storage"
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
+    # Mã mời: nếu đặt, muốn tạo tài khoản phải nhập đúng mã này (nên đặt khi đưa app lên Internet
+    # để người lạ không tạo tài khoản và dùng key LLM của bạn). Để trống = ai cũng tạo được.
+    signup_code: str = ""
+
     # Đặt FORCE_MOCK=1 để bỏ qua mọi API ngoài (dùng cho test/offline)
     force_mock: bool = False
 

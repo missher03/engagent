@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import Session, select
 
+from ..config import get_settings
 from ..db import get_session
 from ..models import AuthToken, User, now
 from ..scoping import SCOPED, current_user_id
@@ -57,6 +58,7 @@ def claim_orphans(session: Session, uid: int) -> None:
 class Credentials(BaseModel):
     username: str
     password: str
+    code: str = ""
 
 
 def _issue(session: Session, user: User) -> dict:
@@ -68,6 +70,9 @@ def _issue(session: Session, user: User) -> dict:
 
 @router.post("/register")
 def register(body: Credentials, session: Session = Depends(get_session)):
+    need = get_settings().signup_code
+    if need and not hmac.compare_digest(body.code.strip(), need):
+        raise HTTPException(403, "Sai mã mời. Hỏi chủ app để lấy mã.")
     name = body.username.strip().lower()
     if not _NAME_OK.match(name):
         raise HTTPException(400, "Tên đăng nhập 3-30 ký tự, chỉ gồm chữ không dấu, số, dấu . _ -")
@@ -83,6 +88,11 @@ def register(body: Credentials, session: Session = Depends(get_session)):
     if first:
         claim_orphans(session, user.id)
     return {**_issue(session, user), "claimed_old_data": first}
+
+
+@router.get("/options")
+def options():
+    return {"signup_code_required": bool(get_settings().signup_code)}
 
 
 @router.post("/login")

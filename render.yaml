@@ -1,0 +1,26 @@
+# Render Blueprint cho API (FastAPI). Frontend Next.js deploy riêng trên Vercel.
+# Render > New > Blueprint > chọn repo này. Các biến sync:false sẽ được hỏi khi tạo, không nằm trong code.
+services:
+  - type: web
+    name: engagent-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL        # chuỗi kết nối Postgres (Neon/Supabase), dạng postgresql://...
+        sync: false
+      - key: CORS_ORIGINS        # địa chỉ Vercel, vd https://engagent.vercel.app
+        sync: false
+      - key: SIGNUP_CODE         # mã mời để tạo tài khoản
+        sync: false
+      - key: LLM_PROVIDER
+        value: minimax
+      - key: MINIMAX_API_KEY
+        sync: false
+      - key: MINIMAX_BASE_URL
+        value: https://api.minimax.cn/anthropic

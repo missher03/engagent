@@ -147,6 +147,10 @@ Gợi ý bước tiếp theo (theo thứ tự PRD):
 6. Job nền sinh playlist podcast ban đêm (Batch API giảm 50% chi phí).
 7. Kiểm tra tỉ lệ từ lạ trong bài sinh (cần danh sách từ thông dụng) — đã để TODO trong `services/content.py`.
 
+## Đưa lên mạng (Vercel + Render + Neon)
+
+Xem [DEPLOY.md](DEPLOY.md).
+
 ## Đổi sang Postgres / Supabase
 
 Đặt `DATABASE_URL=postgresql+psycopg://user:pass@host:5432/db` và `pip install "psycopg[binary]"`. Bảng tự tạo khi khởi động. Khi schema bắt đầu thay đổi thường xuyên, nên thêm Alembic cho migration.
